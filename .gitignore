@@ -39,3 +39,10 @@
 
 # debug information files
 *.dwo
+
+# Directories
+/.vscode
+/build
+
+# ImGui INI
+imgui.ini
