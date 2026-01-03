@@ -121,7 +121,7 @@ static void Init()
     
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.FontDefault = io.Fonts->AddFontFromFileTTF("/home/zake/.local/share/fonts/PaperMono-Regular.ttf");
+    io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/paper-mono/PaperMono-Regular.ttf");
     
     ImGui_ImplSDL3_InitForSDLRenderer(s_Window, s_Renderer);
     ImGui_ImplSDLRenderer3_Init(s_Renderer);
