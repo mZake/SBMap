@@ -12,12 +12,23 @@
 
 namespace SBMap
 {
+    #pragma pack(push, 1)
     struct SBMHeader
     {
         uint8 magic[4];
         int32 width;
         int32 height;
     };
+    
+    struct SBMCell
+    {
+        int32 tile_x;
+        int32 tile_y;
+        uint32 flags;
+    };
+    #pragma pack(pop)
+    
+    constexpr size_t SBM_MINIMUM_SIZE = sizeof(SBMHeader) + sizeof(SBMCell);
     
     static uint32_t GetMapLayerTileFlag(MapLayer layer)
     {
@@ -152,7 +163,7 @@ namespace SBMap
         {
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
-                Cell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
+                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
                 if (cell.tile_x < 0 || cell.tile_y < 0)
                     continue;
                 
@@ -194,7 +205,7 @@ namespace SBMap
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
                 uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
-                Cell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
+                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
                 if (!(cell.flags & tile_flag))
                     continue;
                 
@@ -268,7 +279,7 @@ namespace SBMap
                 (cell_y < 0) || (cell_y >= m_Tilemap.height))
                 return;
             
-            Cell& cell = m_Tilemap.cells[cell_x + cell_y * m_Tilemap.width];
+            MapCell& cell = m_Tilemap.cells[cell_x + cell_y * m_Tilemap.width];
             
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -337,29 +348,34 @@ namespace SBMap
     
     void MapViewport::SaveTilemap()
     {
-        size_t header_size = sizeof(SBMHeader);
-        SBMHeader header;
-        memcpy(header.magic, "SBMP", 4);
-        header.width = m_Tilemap.width;
-        header.height = m_Tilemap.height;
-        
-        size_t cells_size = m_Tilemap.cells.size() * sizeof(Cell);
-        Cell* cells = m_Tilemap.cells.data();
-        
-        size_t buffer_size = header_size + cells_size;
-        std::vector<char> buffer(buffer_size);
-        
-        char* header_dest = buffer.data();
-        char* cells_dest = buffer.data() + header_size;
-        
-        memcpy(header_dest, &header, header_size);
-        memcpy(cells_dest, cells, cells_size);
-        
         std::ofstream stream(m_InputTilemap, std::ios::binary);
         if (!stream)
             return;
         
-        stream.write(buffer.data(), buffer.size());
+        SBMHeader sbm_header;
+        memcpy(sbm_header.magic, "SBMP", 4);
+        sbm_header.width = m_Tilemap.width;
+        sbm_header.height = m_Tilemap.height;
+        
+        size_t sbm_header_size = sizeof(SBMHeader);
+        stream.write(reinterpret_cast<char*>(&sbm_header), sbm_header_size);
+        
+        size_t map_cell_count = m_Tilemap.cells.size();
+        std::vector<SBMCell> sbm_cells(map_cell_count);
+        
+        for (size_t i = 0; i < map_cell_count; i++)
+        {
+            MapCell& map_cell = m_Tilemap.cells[i];
+            SBMCell& sbm_cell = sbm_cells[i];
+            
+            sbm_cell.tile_x = map_cell.tile_x;
+            sbm_cell.tile_y = map_cell.tile_y;
+            sbm_cell.flags = map_cell.flags;
+        }
+        
+        size_t sbm_cells_size = map_cell_count * sizeof(SBMCell);
+        stream.write(reinterpret_cast<char*>(sbm_cells.data()), sbm_cells_size);
+        
         stream.close();
     }
     
@@ -371,30 +387,48 @@ namespace SBMap
         
         stream.seekg(0, std::ios::end);
         size_t stream_size = stream.tellg();
-        stream.seekg(0, std::ios::beg);
-        
-        std::vector<char> buffer(stream_size);
-        stream.read(buffer.data(), buffer.size());
-        stream.close();
-        
-        SBMHeader header;
-        char* header_source = buffer.data();
-        size_t header_size = sizeof(SBMHeader);
-        memcpy(&header, header_source, header_size);
-        
-        if (memcmp(header.magic, "SBMP", 4) != 0)
+        if (stream_size < SBM_MINIMUM_SIZE)
             return;
         
-        size_t cells_count = header.width * header.height;
-        std::vector<Cell> cells(cells_count);
-        char* cells_source = buffer.data() + header_size;
-        size_t cells_size = cells_count * sizeof(Cell);
-        memcpy(cells.data(), cells_source, cells_size);
+        stream.seekg(0, std::ios::beg);
         
-        m_Tilemap.cells = std::move(cells);
+        SBMHeader sbm_header;
+        size_t sbm_header_size = sizeof(SBMHeader);
+        stream.read(reinterpret_cast<char*>(&sbm_header), sbm_header_size);
         
-        m_InputWidth = header.width;
-        m_InputHeight = header.height;
-        ResizeTilemap();
+        if (memcmp(sbm_header.magic, "SBMP", 4) != 0)
+            return;
+        
+        size_t sbm_cells_begin = stream.tellg();
+        
+        size_t sbm_cell_count = sbm_header.width * sbm_header.height;
+        size_t sbm_cells_size = sbm_cell_count * sizeof(SBMCell);
+        size_t sbm_cells_real_size = stream_size - sbm_cells_begin;
+        
+        if (sbm_cells_real_size != sbm_cells_size)
+            return;
+        
+        stream.seekg(sbm_cells_begin, std::ios::beg);
+        
+        std::vector<SBMCell> sbm_cells(sbm_cell_count);
+        stream.read(reinterpret_cast<char*>(sbm_cells.data()), sbm_cells_size);
+        
+        std::vector<MapCell> new_map_cells(sbm_cell_count);
+        
+        for (size_t i = 0; i < sbm_cell_count; i++)
+        {
+            MapCell& map_cell = new_map_cells[i];
+            SBMCell& sbm_cell = sbm_cells[i];
+            
+            map_cell.tile_x = sbm_cell.tile_x;
+            map_cell.tile_y = sbm_cell.tile_y;
+            map_cell.flags = sbm_cell.flags;
+        }
+        
+        m_Tilemap.cells = std::move(new_map_cells);
+        m_Tilemap.width = m_InputWidth = sbm_header.width;
+        m_Tilemap.height = m_InputHeight = sbm_header.height;
+        
+        stream.close();
     }
 }

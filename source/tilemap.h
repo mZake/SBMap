@@ -15,7 +15,7 @@ namespace SBMap
         TILE_FLAGS_RIGHT_GOAL   = 1 << 2,
     };
     
-    struct Cell
+    struct MapCell
     {
         int32 tile_x;
         int32 tile_y;
@@ -34,7 +34,7 @@ namespace SBMap
     struct Tilemap
     {
         const Tileset* tileset;
-        std::vector<Cell> cells;
+        std::vector<MapCell> cells;
         int32 width;
         int32 height;
     };
