@@ -1,7 +1,5 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include <SDL3/SDL.h>
-#include <stb_image.h>
 
 #include "core.h"
 #include "texture.h"
@@ -10,64 +8,97 @@
 
 namespace SBMap
 {
-    void TilePalette::OnAttach()
-    {
-        auto result = LoadTexture("assets/placeholder.png");
-        m_Placeholder = GetResultValue(result);
-    }
+    constexpr int32 MINIMUM_TILE_WIDTH = 4;
+    constexpr int32 MINIMUM_TILE_HEIGHT = 4;
     
-    void TilePalette::OnDetach()
+    static void ResizeTile(TilePalette& tile_palette)
     {
-        m_Tileset = {};
-        m_Placeholder = {};
-        m_SelectedX = 0;
-        m_SelectedY = 0;
-        m_InputTileWidth = 4;
-        m_InputTileHeight = 4;
-        m_InputAtlasImage.clear();
-    }
-    
-    void TilePalette::OnUIRender()
-    {
-        ImGui::Begin("Tile Palette");
+        Tileset& tileset = tile_palette.tileset;
         
-        RenderSelectTile();
-        RenderProperties();
+        if (tile_palette.input_tile_width > tileset.atlas.width)
+            tile_palette.input_tile_width = tileset.atlas.width;
+        if (tile_palette.input_tile_width < MINIMUM_TILE_WIDTH)
+            tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
         
-        ImGui::End();
+        if (tile_palette.input_tile_height > tileset.atlas.height)
+            tile_palette.input_tile_height = tileset.atlas.height;
+        if (tile_palette.input_tile_height < MINIMUM_TILE_HEIGHT)
+            tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;
+        
+        tileset.tile_width = tile_palette.input_tile_width;
+        tileset.tile_height = tile_palette.input_tile_height;
+        
+        tile_palette.selected_x = 0;
+        tile_palette.selected_y = 0;
     }
     
-    void TilePalette::RenderSelectTile()
+    static void ResetTile(TilePalette& tile_palette)
+    {
+        tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
+        tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;
+        
+        ResizeTile(tile_palette);
+    }
+    
+    static void OpenAtlas(TilePalette& tile_palette)
+    {
+        const char* filepath = tile_palette.input_atlas_image.c_str();
+        auto atlas_result = LoadTexture(filepath);
+        if (!atlas_result.is_value)
+            return;
+        
+        Tileset& tileset = tile_palette.tileset;
+        
+        Texture2D& atlas = GetResultValue(atlas_result);
+        int32 tile_width = tileset.tile_width;
+        int32 tile_height = tileset.tile_height;
+        
+        tileset = CreateTileset(atlas, tile_width, tile_height);
+        
+        ResizeTile(tile_palette);
+    }
+    
+    static void ResetAtlas(TilePalette& tile_palette)
+    {
+        tile_palette.tileset.atlas = {};
+        tile_palette.tileset.width = 0;
+        tile_palette.tileset.height = 0;
+        
+        tile_palette.input_atlas_image.clear();
+    }
+    
+    static void ShowSelectTile(TilePalette& tile_palette)
     {
         ImGui::SeparatorText("Select Tile");
         
-        if (IsTilesetValid(m_Tileset))
+        Tileset& tileset = tile_palette.tileset;
+        if (IsTilesetValid(tileset))
         {
             ImVec2 content_size;
-            content_size.x = m_Tileset.atlas.width;
-            content_size.y = m_Tileset.atlas.height;
+            content_size.x = tileset.atlas.width;
+            content_size.y = tileset.atlas.height;
             
             ImGui::BeginChild("TilePalette-SelectTile", content_size);
             
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 ImVec2 mouse_position = ImGui::GetMousePos() - ImGui::GetWindowPos();
-                m_SelectedX = mouse_position.x / m_Tileset.tile_width;
-                m_SelectedY = mouse_position.y / m_Tileset.tile_height;
+                tile_palette.selected_y = mouse_position.x / tileset.tile_width;
+                tile_palette.selected_x = mouse_position.y / tileset.tile_height;
             }
             
-            ImTextureRef atlas_image_ref = GetTextureImGuiID(m_Tileset.atlas);
+            ImTextureRef atlas_image_ref = GetTextureImGuiID(tileset.atlas);
             ImGui::Image(atlas_image_ref, content_size);
             
             ImVec2 window_position = ImGui::GetWindowPos();
             
             ImVec2 marker_min;
-            marker_min.x = window_position.x + m_SelectedX * m_Tileset.tile_width;
-            marker_min.y = window_position.y + m_SelectedY * m_Tileset.tile_height;
+            marker_min.x = window_position.x + tile_palette.selected_x * tileset.tile_width;
+            marker_min.y = window_position.y + tile_palette.selected_y * tileset.tile_height;
             
             ImVec2 marker_max;
-            marker_max.x = marker_min.x + m_Tileset.tile_width;
-            marker_max.y = marker_min.y + m_Tileset.tile_height;
+            marker_max.x = marker_min.x + tileset.tile_width;
+            marker_max.y = marker_min.y + tileset.tile_height;
             
             ImColor marker_color = { 255, 255, 255, 255 };
             
@@ -78,95 +109,94 @@ namespace SBMap
         }
         else
         {
-            ImVec2 placeholder_size;
-            placeholder_size.x = m_Placeholder.width;
-            placeholder_size.y = m_Placeholder.height;
+            /*
+            Texture2D& placeholder = tile_palette.placeholder;
             
-            ImTextureRef placeholder_image_ref = GetTextureImGuiID(m_Placeholder);
+            ImVec2 placeholder_size;
+            placeholder_size.x = placeholder.width;
+            placeholder_size.y = placeholder.height;
+            
+            ImTextureRef placeholder_image_ref = GetTextureImGuiID(placeholder);
             ImGui::Image(placeholder_image_ref, placeholder_size);
+            */
         }
     }
     
-    void TilePalette::RenderProperties()
+    static void ShowProperties(TilePalette& tile_palette)
     {
         ImGui::SeparatorText("Properties");
         
         ImGui::BeginChild("TilePalette-Properties");
         
-        ImGui::InputInt("Tile Width", &m_InputTileWidth);
-        ImGui::InputInt("Tile Height", &m_InputTileHeight);
+        ImGui::InputInt("Tile Width", &tile_palette.input_tile_width);
+        ImGui::InputInt("Tile Height", &tile_palette.input_tile_height);
         
         if (ImGui::Button("Resize##Tile"))
-            ResizeTile();
+            ResizeTile(tile_palette);
         
         ImGui::SameLine();
         
         if (ImGui::Button("Reset##Tile"))
-            ResetTile();
+            ResetTile(tile_palette);
         
         ImGui::Spacing();
         
-        ImGui::InputText("Atlas Image", &m_InputAtlasImage);
+        ImGui::InputText("Atlas Image", &tile_palette.input_atlas_image);
         
         if (ImGui::Button("Open"))
-            OpenAtlas();
+            OpenAtlas(tile_palette);
         
         ImGui::SameLine();
         
         if (ImGui::Button("Reset##Atlas"))
-            ResetAtlas();
+            ResetAtlas(tile_palette);
         
         ImGui::EndChild();
     }
     
-    void TilePalette::ResizeTile()
+    bool InitTilePalette(TilePalette& tile_palette)
     {
-        if (m_InputTileWidth > m_Tileset.atlas.width)
-            m_InputTileWidth = m_Tileset.atlas.width;
-        if (m_InputTileWidth < 4)
-            m_InputTileWidth = 4;
+        tile_palette.tileset = {};
+        tile_palette.tileset.tile_width = MINIMUM_TILE_WIDTH;
+        tile_palette.tileset.tile_height = MINIMUM_TILE_HEIGHT;
         
-        if (m_InputTileHeight > m_Tileset.atlas.height)
-            m_InputTileHeight = m_Tileset.atlas.height;
-        if (m_InputTileHeight < 4)
-            m_InputTileHeight = 4;
+        /*
+        auto placeholder_result = LoadTexture("assets/placeholder.png");
+        if (!placeholder_result.is_value)
+            return false;
         
-        m_Tileset.tile_width = m_InputTileWidth;
-        m_Tileset.tile_height = m_InputTileHeight;
+        tile_palette.placeholder = GetResultValue(placeholder_result);
+        */
         
-        m_SelectedX = 0;
-        m_SelectedY = 0;
+        tile_palette.selected_x = 0;
+        tile_palette.selected_y = 0;
+        
+        tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
+        tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;
+        
+        return true;
     }
     
-    void TilePalette::ResetTile()
+    void CloseTilePalette(TilePalette& tile_palette)
     {
-        m_InputTileWidth = 4;
-        m_InputTileHeight = 4;
+        tile_palette.tileset = {};
+        tile_palette.placeholder = {};
         
-        ResizeTile();
+        tile_palette.selected_x = 0;
+        tile_palette.selected_y = 0;
+        
+        tile_palette.input_atlas_image.clear();
+        tile_palette.input_tile_width = 0;
+        tile_palette.input_tile_height = 0;
     }
     
-    void TilePalette::OpenAtlas()
+    void ShowTilePalette(TilePalette& tile_palette)
     {
-        const char* filepath = m_InputAtlasImage.c_str();
+        ImGui::Begin("Tile Palette");
         
-        auto result = LoadTexture(filepath);
-        if (!result.is_value)
-            return;
+        ShowSelectTile(tile_palette);
+        ShowProperties(tile_palette);
         
-        Texture2D& texture = GetResultValue(result);
-        int32 tile_width = m_Tileset.tile_width;
-        int32 tile_height = m_Tileset.tile_height;
-        
-        m_Tileset = CreateTileset(texture, tile_width, tile_height);
-        ResizeTile();
-    }
-    
-    void TilePalette::ResetAtlas()
-    {
-        m_Tileset.atlas = {};
-        m_Tileset.width = 0;
-        m_Tileset.height = 0;
-        m_InputAtlasImage.clear();
+        ImGui::End();
     }
 }

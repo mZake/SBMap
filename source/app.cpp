@@ -1,4 +1,5 @@
 #include "app.h"
+#include "tile_palette.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
@@ -112,6 +113,8 @@ namespace SBMap
     
     bool InitAppContext(AppContext& app_context)
     {
+        app_context = {};
+        
         if (!SDL_Init(SDL_INIT_VIDEO))
         {
             SDL_Log("SDL initialization failed: %s", SDL_GetError());
@@ -159,6 +162,12 @@ namespace SBMap
         app_context.window = window;
         app_context.renderer = renderer;
         
+        if (!InitTilePalette(app_context.tile_palette))
+        {
+            SDL_Log("Tile Palette widget initialization failed");
+            return false;
+        }
+        
         SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         SDL_SetRenderVSync(renderer, 1);
         SDL_ShowWindow(window);
@@ -204,6 +213,8 @@ namespace SBMap
             ImGui::NewFrame();
             
             ImGui::DockSpaceOverViewport();
+            
+            ShowTilePalette(app_context.tile_palette);
             
             SDL_SetRenderDrawColor(app_context.renderer, 32, 32, 40, 255);
             SDL_RenderClear(app_context.renderer);

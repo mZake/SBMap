@@ -2,12 +2,15 @@
 
 #include <SDL3/SDL.h>
 
+#include "tile_palette.h"
+
 namespace SBMap
 {
     struct AppContext
     {
         SDL_Window* window;
         SDL_Renderer* renderer;
+        TilePalette tile_palette;
         bool imgui_impl_sdl3_init;
         bool imgui_impl_sdlren3_init;
         bool running;
