@@ -7,6 +7,8 @@ add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
 
 set(SOURCE_FILES
+    source/app.cpp
+    source/app.h
     source/core.h
     source/error.h
     source/main.cpp
