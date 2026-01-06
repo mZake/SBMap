@@ -1,4 +1,5 @@
 #include "app.h"
+#include "map_viewport.h"
 #include "tile_palette.h"
 
 #include <imgui.h>
@@ -168,6 +169,12 @@ namespace SBMap
             return false;
         }
         
+        if (!InitMapViewport(app_context.map_viewport, app_context.tile_palette))
+        {
+            SDL_Log("Map Viewport widget initialization failed");
+            return false;
+        }
+        
         SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         SDL_SetRenderVSync(renderer, 1);
         SDL_ShowWindow(window);
@@ -192,6 +199,9 @@ namespace SBMap
         if (app_context.window)
             SDL_DestroyWindow(app_context.window);
         
+        CloseMapViewport(app_context.map_viewport);
+        CloseTilePalette(app_context.tile_palette);
+        
         app_context.window = nullptr;
         app_context.renderer = nullptr;
         app_context.imgui_impl_sdl3_init = false;
@@ -215,6 +225,7 @@ namespace SBMap
             ImGui::DockSpaceOverViewport();
             
             ShowTilePalette(app_context.tile_palette);
+            ShowMapViewport(app_context.map_viewport, app_context.tile_palette);
             
             SDL_SetRenderDrawColor(app_context.renderer, 32, 32, 40, 255);
             SDL_RenderClear(app_context.renderer);

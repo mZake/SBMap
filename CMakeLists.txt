@@ -12,8 +12,8 @@ set(SOURCE_FILES
     source/core.h
     source/error.h
     source/main.cpp
-    # source/map_viewport.cpp
-    # source/map_viewport.h
+    source/map_viewport.cpp
+    source/map_viewport.h
     source/texture.cpp
     source/texture.h
     source/tile_palette.cpp
