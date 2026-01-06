@@ -100,7 +100,7 @@ namespace SBMap
         style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
     }
     
-    static void ProcessEvents(AppContext& app_context)
+    static void ProcessEvents(AppContext& context)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -108,14 +108,12 @@ namespace SBMap
             ImGui_ImplSDL3_ProcessEvent(&event);
             
             if (event.type == SDL_EVENT_QUIT)
-                app_context.running = false;
+                context.running = false;
         }
     }
     
-    bool InitAppContext(AppContext& app_context)
+    static bool InitSDL(AppContext& context)
     {
-        app_context = {};
-        
         if (!SDL_Init(SDL_INIT_VIDEO))
         {
             SDL_Log("SDL initialization failed: %s", SDL_GetError());
@@ -123,32 +121,41 @@ namespace SBMap
         }
         
         SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
-        SDL_Window* window = SDL_CreateWindow("SBMap", 1280, 720, window_flags);
-        if (!window)
+        context.window = SDL_CreateWindow("SBMap", 1280, 720, window_flags);
+        if (!context.window)
         {
             SDL_Log("Window creation failed: %s", SDL_GetError());
             return false;
         }
         
-        SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
-        if (!renderer)
+        context.renderer = SDL_CreateRenderer(context.window, nullptr);
+        if (!context.renderer)
         {
             SDL_Log("Renderer creation failed: %s", SDL_GetError());
             return false;
         }
         
+        SDL_SetWindowPosition(context.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        SDL_SetRenderVSync(context.renderer, 1);
+        SDL_ShowWindow(context.window);
+        
+        return true;
+    }
+    
+    static bool InitImGui(AppContext& context)
+    {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         
-        app_context.imgui_impl_sdl3_init = ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-        if (!app_context.imgui_impl_sdl3_init)
+        context.is_imgui_sdl3_init = ImGui_ImplSDL3_InitForSDLRenderer(context.window, context.renderer);
+        if (!context.is_imgui_sdl3_init)
         {
             SDL_Log("ImGui_ImplSDL3 initialization failed");
             return false;
         }
         
-        app_context.imgui_impl_sdlren3_init = ImGui_ImplSDLRenderer3_Init(renderer);
-        if (!app_context.imgui_impl_sdlren3_init)
+        context.is_imgui_sdlren3_init = ImGui_ImplSDLRenderer3_Init(context.renderer);
+        if (!context.is_imgui_sdlren3_init)
         {
             SDL_Log("ImGui_ImplSDLRenderer3 initialization failed");
             return false;
@@ -160,63 +167,90 @@ namespace SBMap
         
         SetupImGuiStyle();
         
-        app_context.window = window;
-        app_context.renderer = renderer;
-        
-        if (!InitTilePalette(app_context.tile_palette))
+        return true;
+    }
+    
+    static bool InitWidgets(AppContext& context)
+    {
+        if (!InitTilePalette(context.tile_palette))
         {
             SDL_Log("Tile Palette widget initialization failed");
             return false;
         }
         
-        if (!InitMapViewport(app_context.map_viewport, app_context.tile_palette))
+        if (!InitMapViewport(context.map_viewport, context.tile_palette))
         {
             SDL_Log("Map Viewport widget initialization failed");
             return false;
         }
         
-        SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        SDL_SetRenderVSync(renderer, 1);
-        SDL_ShowWindow(window);
-        
         return true;
     }
     
-    void CloseAppContext(AppContext& app_context)
+    static void CloseSDL(AppContext& context)
     {
-        if (app_context.imgui_impl_sdlren3_init)
+        if (context.renderer)
+            SDL_DestroyRenderer(context.renderer);
+        
+        if (context.window)
+            SDL_DestroyWindow(context.window);
+        
+        context.renderer = nullptr;
+        context.window = nullptr;
+        
+        SDL_Quit();
+    }
+    
+    static void CloseImGui(AppContext& context)
+    {
+        if (context.is_imgui_sdlren3_init)
             ImGui_ImplSDLRenderer3_Shutdown();
         
-        if (app_context.imgui_impl_sdl3_init)
+        if (context.is_imgui_sdl3_init)
             ImGui_ImplSDL3_Shutdown();
         
         if (ImGui::GetCurrentContext())
             ImGui::DestroyContext();
         
-        if (app_context.renderer)
-            SDL_DestroyRenderer(app_context.renderer);
-        
-        if (app_context.window)
-            SDL_DestroyWindow(app_context.window);
-        
-        CloseMapViewport(app_context.map_viewport);
-        CloseTilePalette(app_context.tile_palette);
-        
-        app_context.window = nullptr;
-        app_context.renderer = nullptr;
-        app_context.imgui_impl_sdl3_init = false;
-        app_context.imgui_impl_sdlren3_init = false;
-        app_context.running = false;
+        context.is_imgui_sdlren3_init = false;
+        context.is_imgui_sdl3_init = false;
     }
     
-    void RunApp(AppContext& app_context)
+    static void CloseWidgets(AppContext& context)
     {
-        SDL_assert(app_context.running == false);
+        CloseMapViewport(context.map_viewport);
+        CloseTilePalette(context.tile_palette);
         
-        app_context.running = true;
-        while (app_context.running)
+        context.map_viewport = {};
+        context.tile_palette = {};
+    }
+    
+    bool InitAppContext(AppContext& context)
+    {
+        context = {};
+        
+        if (!InitSDL(context))      return false;
+        if (!InitImGui(context))    return false;
+        if (!InitWidgets(context))  return false;
+        
+        return true;
+    }
+    
+    void CloseAppContext(AppContext& context)
+    {
+        CloseWidgets(context);
+        CloseImGui(context);
+        CloseSDL(context);
+    }
+    
+    void RunApp(AppContext& context)
+    {
+        SDL_assert(context.running == false);
+        
+        context.running = true;
+        while (context.running)
         {
-            ProcessEvents(app_context);
+            ProcessEvents(context);
             
             ImGui_ImplSDLRenderer3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
@@ -224,16 +258,16 @@ namespace SBMap
             
             ImGui::DockSpaceOverViewport();
             
-            ShowTilePalette(app_context.tile_palette);
-            ShowMapViewport(app_context.map_viewport, app_context.tile_palette);
+            ShowTilePalette(context.tile_palette);
+            ShowMapViewport(context.map_viewport, context.tile_palette);
             
-            SDL_SetRenderDrawColor(app_context.renderer, 32, 32, 40, 255);
-            SDL_RenderClear(app_context.renderer);
+            SDL_SetRenderDrawColor(context.renderer, 32, 32, 40, 255);
+            SDL_RenderClear(context.renderer);
             
             ImGui::Render();
-            ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), app_context.renderer);
+            ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), context.renderer);
             
-            SDL_RenderPresent(app_context.renderer);
+            SDL_RenderPresent(context.renderer);
         }
     }
     
