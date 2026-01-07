@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <SDL3/SDL.h>
+
 #include "core.h"
 #include "tilemap.h"
 
@@ -18,8 +20,8 @@ namespace SBMap
         int32 input_tile_height;
     };
     
-    bool InitTilePalette(TilePalette& tile_palette);
+    bool InitTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer);
     void CloseTilePalette(TilePalette& tile_palette);
     
-    void ShowTilePalette(TilePalette& tile_palette);
+    void ShowTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer);
 }

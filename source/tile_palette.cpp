@@ -11,6 +11,21 @@ namespace SBMap
     constexpr int32 MINIMUM_TILE_WIDTH = 4;
     constexpr int32 MINIMUM_TILE_HEIGHT = 4;
     
+    static Error s_Error;
+    static bool s_OpenErrorWindow = false;
+    
+    static void SetError(Error error)
+    {
+        s_Error = error;
+        s_OpenErrorWindow = true;
+    }
+    
+    static void ClearError()
+    {
+        s_Error.message[0] = '\0';
+        s_OpenErrorWindow = false;
+    }
+    
     static void ResizeTile(TilePalette& tile_palette)
     {
         Tileset& tileset = tile_palette.tileset;
@@ -40,22 +55,27 @@ namespace SBMap
         ResizeTile(tile_palette);
     }
     
-    static void OpenAtlas(TilePalette& tile_palette)
-    {
+    static void OpenAtlas(TilePalette& tile_palette, SDL_Renderer* renderer)
+    {        
         const char* filepath = tile_palette.input_atlas_image.c_str();
-        auto atlas_result = LoadTexture(filepath);
-        if (!atlas_result.is_value)
-            return;
-        
-        Tileset& tileset = tile_palette.tileset;
-        
-        Texture2D& atlas = GetResultValue(atlas_result);
-        int32 tile_width = tileset.tile_width;
-        int32 tile_height = tileset.tile_height;
-        
-        tileset = CreateTileset(atlas, tile_width, tile_height);
-        
-        ResizeTile(tile_palette);
+        auto atlas_result = LoadTexture(filepath, renderer);
+        if (IsResultValue(atlas_result))
+        {
+            Tileset& tileset = tile_palette.tileset;
+            
+            Texture2D& atlas = GetResultValue(atlas_result);
+            int32 tile_width = tileset.tile_width;
+            int32 tile_height = tileset.tile_height;
+            
+            tileset = CreateTileset(atlas, tile_width, tile_height);
+            
+            ResizeTile(tile_palette);
+        }
+        else
+        {
+            Error error = GetResultError(atlas_result);
+            SetError(error);
+        }
     }
     
     static void ResetAtlas(TilePalette& tile_palette)
@@ -109,7 +129,6 @@ namespace SBMap
         }
         else
         {
-            /*
             Texture2D& placeholder = tile_palette.placeholder;
             
             ImVec2 placeholder_size;
@@ -118,11 +137,10 @@ namespace SBMap
             
             ImTextureRef placeholder_image_ref = GetTextureImGuiID(placeholder);
             ImGui::Image(placeholder_image_ref, placeholder_size);
-            */
         }
     }
     
-    static void ShowProperties(TilePalette& tile_palette)
+    static void ShowProperties(TilePalette& tile_palette, SDL_Renderer* renderer)
     {
         ImGui::SeparatorText("Properties");
         
@@ -144,7 +162,7 @@ namespace SBMap
         ImGui::InputText("Atlas Image", &tile_palette.input_atlas_image);
         
         if (ImGui::Button("Open"))
-            OpenAtlas(tile_palette);
+            OpenAtlas(tile_palette, renderer);
         
         ImGui::SameLine();
         
@@ -154,19 +172,19 @@ namespace SBMap
         ImGui::EndChild();
     }
     
-    bool InitTilePalette(TilePalette& tile_palette)
+    bool InitTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer)
     {
+        SDL_assert(renderer != nullptr);
+        
         tile_palette.tileset = {};
         tile_palette.tileset.tile_width = MINIMUM_TILE_WIDTH;
         tile_palette.tileset.tile_height = MINIMUM_TILE_HEIGHT;
         
-        /*
-        auto placeholder_result = LoadTexture("assets/placeholder.png");
-        if (!placeholder_result.is_value)
+        auto placeholder_result = LoadTexture("assets/placeholder.png", renderer);
+        if (IsResultError(placeholder_result))
             return false;
         
         tile_palette.placeholder = GetResultValue(placeholder_result);
-        */
         
         tile_palette.selected_x = 0;
         tile_palette.selected_y = 0;
@@ -190,12 +208,31 @@ namespace SBMap
         tile_palette.input_tile_height = 0;
     }
     
-    void ShowTilePalette(TilePalette& tile_palette)
+    void ShowTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer)
     {
+        SDL_assert(renderer != nullptr);
+        
         ImGui::Begin("Tile Palette");
         
+        if (s_OpenErrorWindow)
+            ImGui::OpenPopup("Error");
+        
+        if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::TextUnformatted(s_Error.message);
+            s_OpenErrorWindow = false;
+            
+            if (ImGui::Button("Ok##Error", ImVec2(120, 0)))
+            {
+                ClearError();
+                ImGui::CloseCurrentPopup();
+            }
+            
+            ImGui::EndPopup();
+        }
+        
         ShowSelectTile(tile_palette);
-        ShowProperties(tile_palette);
+        ShowProperties(tile_palette, renderer);
         
         ImGui::End();
     }

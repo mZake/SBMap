@@ -172,7 +172,7 @@ namespace SBMap
     
     static bool InitWidgets(AppContext& context)
     {
-        if (!InitTilePalette(context.tile_palette))
+        if (!InitTilePalette(context.tile_palette, context.renderer))
         {
             SDL_Log("Tile Palette widget initialization failed");
             return false;
@@ -258,7 +258,7 @@ namespace SBMap
             
             ImGui::DockSpaceOverViewport();
             
-            ShowTilePalette(context.tile_palette);
+            ShowTilePalette(context.tile_palette, context.renderer);
             ShowMapViewport(context.map_viewport, context.tile_palette);
             
             SDL_SetRenderDrawColor(context.renderer, 32, 32, 40, 255);
