@@ -1,5 +1,3 @@
-#include <vector>
-
 #include <SDL3/SDL.h>
 #include <stb_image.h>
 
@@ -9,155 +7,69 @@
 
 namespace SBMap
 {
-    struct TextureInfo
+    static void IncrementCount(const Texture2D& texture)
     {
-        SDL_Texture* handle;
-        int32 width;
-        int32 height;
-        int32 count;
-        bool empty;
-    };
-    
-    static std::vector<TextureInfo> s_TextureInfo;
-    static std::vector<int32> s_EmptySlots;
-    
-    extern SDL_Renderer* GetRenderer();
-    
-    static Result<SDL_Texture*> LoadSDLTexture(const char* filepath)
-    {
-        int width, height;
-        int channels = 4;
-        stbi_uc* pixels = stbi_load(filepath, &width, &height, nullptr, channels);
-        if (!pixels)
-            return Error("file '{}' not found", filepath);
+        if (!texture.handle || !texture.count)
+            return;
         
-        SDL_PixelFormat pixel_format = SDL_PIXELFORMAT_RGBA32;
-        int pitch = width * 4;
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(width, height, pixel_format, pixels, pitch);
-        if (!surface)
-            return Error("{}", SDL_GetError());
-        
-        SDL_Renderer* renderer = GetRenderer();
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!texture)
-            return Error("{}", SDL_GetError());
-        
-        SDL_DestroySurface(surface);
-        stbi_image_free(pixels);
-        
-        return texture;
+        (*texture.count)++;
     }
     
-    static int32 GetNextID()
+    static void DecrementCount(const Texture2D& texture)
     {
-        if (s_EmptySlots.empty())
+        if (!texture.handle || !texture.count)
+            return;
+        
+        (*texture.count)--;
+        if (*texture.count == 0)
         {
-            s_TextureInfo.emplace_back();
-            int32 id = s_TextureInfo.size() - 1;
-            return id;
+            SDL_DestroyTexture(texture.handle);
+            delete texture.count;
         }
-        
-        int32 id = s_EmptySlots.back();
-        s_EmptySlots.pop_back();
-        
-        return id;
-    }
-    
-    static Result<int32> CreateTexture(const char* filepath)
-    {
-        auto result = LoadSDLTexture(filepath);
-        if (!result.is_value)
-            return GetResultError(result);
-        
-        SDL_Texture* handle = GetResultValue(result);
-        float32 width, height;
-        SDL_GetTextureSize(handle, &width, &height);
-        
-        TextureInfo info;
-        info.handle = handle;
-        info.width = static_cast<int32>(width);
-        info.height = static_cast<int32>(height);
-        info.count = 1;
-        info.empty = false;
-        
-        int32 id = GetNextID();
-        s_TextureInfo[id] = info;
-        
-        return id;
-    }
-    
-    static void DestroyTexture(int32 id)
-    {        
-        TextureInfo& info = s_TextureInfo[id];
-        
-        SDL_DestroyTexture(info.handle);
-        
-        info.handle = nullptr;
-        info.empty = true;
-        
-        s_EmptySlots.push_back(id);
-    }
-    
-    static void AddRef(int32 id)
-    {
-        TextureInfo& info = s_TextureInfo[id];
-        info.count++;
-    }
-    
-    static void RemoveRef(int32 id)
-    {
-        TextureInfo& info = s_TextureInfo[id];
-        info.count--;
-        if (info.count <= 0)
-            DestroyTexture(id);
-    }
-    
-    static bool IsIDValid(int32 id)
-    {
-        bool result = (id >= 0) && (id < s_TextureInfo.size());
-        return result;
     }
     
     Texture2D::Texture2D(const Texture2D& other)
     {
-        if (IsTextureValid(other))
-            AddRef(other.id);
-                
-        this->id = other.id;
-        this->width = other.width;
-        this->height = other.height;
+        IncrementCount(other);
+        
+        handle = other.handle;
+        count = other.count;
+        width = other.width;
+        height = other.height;
     }
     
     Texture2D::Texture2D(Texture2D&& other)
     {        
-        this->id = other.id;
-        this->width = other.width;
-        this->height = other.height;
+        handle = other.handle;
+        count = other.count;
+        width = other.width;
+        height = other.height;
         
-        other.id = -1;
+        other.handle = nullptr;
+        other.count = nullptr;
         other.width = 0;
         other.height = 0;
     }
     
     Texture2D::~Texture2D()
     {        
-        if (IsTextureValid(*this))
-            RemoveRef(this->id);
+        DecrementCount(*this);
     }
     
     Texture2D& Texture2D::operator=(const Texture2D& other)
     {
         if (this != &other)
-        {            
-            if (IsTextureValid(*this))
-                RemoveRef(this->id);
+        {          
+            if (handle != other.handle)
+            {
+                DecrementCount(*this);
+                IncrementCount(other);
+            }  
             
-            if (IsTextureValid(other))
-                AddRef(other.id);
-            
-            this->id = other.id;
-            this->width = other.width;
-            this->height = other.height;
+            handle = other.handle;
+            count = other.count;
+            width = other.width;
+            height = other.height;
         }
         
         return *this;
@@ -167,14 +79,15 @@ namespace SBMap
     {
         if (this != &other)
         {            
-            if (IsTextureValid(*this))
-                RemoveRef(this->id);
+            DecrementCount(*this);
             
-            this->id = other.id;
-            this->width = other.width;
-            this->height = other.height;
+            handle = other.handle;
+            count = other.count;
+            width = other.width;
+            height = other.height;
             
-            other.id = -1;
+            other.handle = nullptr;
+            other.count = nullptr;
             other.width = 0;
             other.height = 0;
         }
@@ -182,38 +95,74 @@ namespace SBMap
         return *this;
     }
     
-    Result<Texture2D> LoadTexture(const char* filepath)
+    Result<Texture2D> LoadTexture(const char* filepath, SDL_Renderer* renderer)
     {
-        auto result = CreateTexture(filepath);
-        if (!result.is_value)
-            return GetResultError(result);
+        SDL_assert(filepath != nullptr);
+        SDL_assert(renderer != nullptr);
         
-        int32 id = GetResultValue(result);
-        TextureInfo& info = s_TextureInfo[id];
+        SDL_PathInfo path_info;
+        if (!SDL_GetPathInfo(filepath, &path_info))
+            return MakeError("Path '%s' not found", filepath);
+        
+        if (path_info.type != SDL_PATHTYPE_FILE)
+            return MakeError("'%s' is not a regular file", filepath);
+        
+        uint8* pixels = nullptr;
+        SDL_Surface* surface = nullptr;
+        SDL_Texture* handle = nullptr;
+        
+        auto cleanup_intermediate = [&](){
+            if (surface)
+                SDL_DestroySurface(surface);
+            if (pixels)
+                stbi_image_free(pixels);
+        };
+        
+        int32 width, height, channels;
+        pixels = stbi_load(filepath, &width, &height, &channels, 4);
+        if (!pixels)
+        {
+            cleanup_intermediate();
+            return MakeError("Image loading failed: %s", stbi_failure_reason());
+        }
+        
+        SDL_PixelFormat pixel_format = SDL_PIXELFORMAT_RGBA32;
+        surface = SDL_CreateSurfaceFrom(width, height, pixel_format, pixels, width * 4);
+        if (!surface)
+        {
+            cleanup_intermediate();
+            return MakeError("Surface creation failed: %s", SDL_GetError());
+        }
+        
+        handle = SDL_CreateTextureFromSurface(renderer, surface);
+        if (!handle)
+        {
+            cleanup_intermediate();
+            return MakeError("Texture creation failed: %s", SDL_GetError());
+        }
+        
+        cleanup_intermediate();
         
         Texture2D texture;
-        texture.id = id;
-        texture.width = info.width;
-        texture.height = info.height;
+        texture.handle = handle;
+        texture.count = new size_t(1);
+        texture.width = width;
+        texture.height = height;
         
         return texture;
     }
     
     bool IsTextureValid(const Texture2D& texture)
     {
-        if (!IsIDValid(texture.id))
-            return false;
-        
-        TextureInfo& info = s_TextureInfo[texture.id];
-        if (info.empty)
-            return false;
-        
-        return true;
+        return texture.handle != nullptr 
+            && texture.count != nullptr
+            && *texture.count > 0
+            && texture.width > 0
+            && texture.height > 0;
     }
     
-    uint64_t GetTextureImGuiID(const Texture2D& texture)
+    uint64 GetTextureImGuiID(const Texture2D& texture)
     {
-        TextureInfo& info = s_TextureInfo[texture.id];
-        return reinterpret_cast<uint64_t>(info.handle);
+        return reinterpret_cast<uint64>(texture.handle);
     }
 }

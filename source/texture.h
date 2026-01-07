@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+
 #include "core.h"
 #include "error.h"
 
@@ -7,7 +9,8 @@ namespace SBMap
 {
     struct Texture2D
     {
-        int32 id = -1;
+        SDL_Texture* handle = nullptr;
+        size_t* count = nullptr;
         int32 width = 0;
         int32 height = 0;
         
@@ -20,7 +23,7 @@ namespace SBMap
         Texture2D& operator=(Texture2D&& other);
     };
     
-    Result<Texture2D> LoadTexture(const char* filepath);
+    Result<Texture2D> LoadTexture(const char* filepath, SDL_Renderer* renderer);
     bool IsTextureValid(const Texture2D& other);
-    uint64_t GetTextureImGuiID(const Texture2D& texture);
+    uint64 GetTextureImGuiID(const Texture2D& texture);
 }
