@@ -10,6 +10,7 @@ set(SOURCE_FILES
     source/app.cpp
     source/app.h
     source/core.h
+    source/error.cpp
     source/error.h
     source/main.cpp
     source/map_viewport.cpp
