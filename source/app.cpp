@@ -172,17 +172,25 @@ namespace SBMap
     
     static bool InitWidgets(AppContext& context)
     {
-        if (!InitTilePalette(context.tile_palette, context.renderer))
+        auto tile_palette_result = CreateTilePalette(context.renderer);
+        if (IsResultError(tile_palette_result))
         {
-            SDL_Log("Tile Palette widget initialization failed");
+            Error error = GetResultError(tile_palette_result);
+            SDL_Log("Tile Palette initialization failed: %s", error.message);
             return false;
         }
         
-        if (!InitMapViewport(context.map_viewport, context.tile_palette))
+        context.tile_palette = GetResultValue(tile_palette_result);
+        
+        auto map_viewport_result = CreateMapViewport(context.tile_palette);
+        if (IsResultError(map_viewport_result))
         {
-            SDL_Log("Map Viewport widget initialization failed");
+            Error error = GetResultError(map_viewport_result);
+            SDL_Log("Map Viewport initialization failed: %s", error.message);
             return false;
         }
+        
+        context.map_viewport = GetResultValue(map_viewport_result);
         
         return true;
     }

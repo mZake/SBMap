@@ -3,6 +3,7 @@
 #include <string>
 
 #include "core.h"
+#include "error.h"
 #include "tile_palette.h"
 #include "tilemap.h"
 
@@ -27,7 +28,7 @@ namespace SBMap
         bool show_marker;
     };
     
-    bool InitMapViewport(MapViewport& map_viewport, TilePalette& tile_palette);
+    Result<MapViewport> CreateMapViewport(TilePalette& tile_palette);
     void CloseMapViewport(MapViewport& map_viewport);
     
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette);

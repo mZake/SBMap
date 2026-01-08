@@ -172,27 +172,28 @@ namespace SBMap
         ImGui::EndChild();
     }
     
-    bool InitTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer)
+    Result<TilePalette> CreateTilePalette(SDL_Renderer* renderer)
     {
         SDL_assert(renderer != nullptr);
         
+        auto placeholder_result = LoadTexture("assets/placeholder.png", renderer);
+        if (IsResultError(placeholder_result))
+        {
+            Error error = GetResultError(placeholder_result);
+            return MakeError("Placeholder texture loading failed: %s", error.message);
+        }
+        
+        TilePalette tile_palette;
         tile_palette.tileset = {};
         tile_palette.tileset.tile_width = MINIMUM_TILE_WIDTH;
         tile_palette.tileset.tile_height = MINIMUM_TILE_HEIGHT;
-        
-        auto placeholder_result = LoadTexture("assets/placeholder.png", renderer);
-        if (IsResultError(placeholder_result))
-            return false;
-        
         tile_palette.placeholder = GetResultValue(placeholder_result);
-        
         tile_palette.selected_x = 0;
         tile_palette.selected_y = 0;
-        
         tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
         tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;
         
-        return true;
+        return tile_palette;
     }
     
     void CloseTilePalette(TilePalette& tile_palette)

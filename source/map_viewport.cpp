@@ -431,21 +431,21 @@ namespace SBMap
         ImGui::EndChild();
     }
     
-    bool InitMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
+    Result<MapViewport> CreateMapViewport(TilePalette& tile_palette)
     {
+        MapViewport map_viewport;
         map_viewport.tilemap = {};
         map_viewport.tilemap.tileset = &tile_palette.tileset;
         map_viewport.tilemap.cells.resize(MINIMUM_MAP_CELL_COUNT, { -1, -1 });
         map_viewport.tilemap.width = MINIMUM_MAP_WIDTH;
         map_viewport.tilemap.height = MINIMUM_MAP_HEIGHT;
-        
         map_viewport.selected_layer = MapLayer::Tiles;
         map_viewport.input_width = MINIMUM_MAP_WIDTH;
         map_viewport.input_height = MINIMUM_MAP_HEIGHT;
         map_viewport.show_grid = true;
         map_viewport.show_marker = true;
         
-        return true;
+        return map_viewport;
     }
     
     void CloseMapViewport(MapViewport& map_viewport)
