@@ -29,7 +29,6 @@ namespace SBMap
     };
     
     Result<MapViewport> CreateMapViewport(TilePalette& tile_palette);
-    void CloseMapViewport(MapViewport& map_viewport);
     
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette);
 }

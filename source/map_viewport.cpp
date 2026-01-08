@@ -448,17 +448,6 @@ namespace SBMap
         return map_viewport;
     }
     
-    void CloseMapViewport(MapViewport& map_viewport)
-    {
-        map_viewport.tilemap = {};
-        map_viewport.selected_layer = MapLayer::Tiles;
-        map_viewport.input_tilemap.clear();
-        map_viewport.input_width = 0;
-        map_viewport.input_height = 0;
-        map_viewport.show_grid = false;
-        map_viewport.show_marker = false;
-    }
-    
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
     {
         ImGui::Begin("Map Viewport", nullptr, ImGuiWindowFlags_HorizontalScrollbar);

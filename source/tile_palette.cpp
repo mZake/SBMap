@@ -196,19 +196,6 @@ namespace SBMap
         return tile_palette;
     }
     
-    void CloseTilePalette(TilePalette& tile_palette)
-    {
-        tile_palette.tileset = {};
-        tile_palette.placeholder = {};
-        
-        tile_palette.selected_x = 0;
-        tile_palette.selected_y = 0;
-        
-        tile_palette.input_atlas_image.clear();
-        tile_palette.input_tile_width = 0;
-        tile_palette.input_tile_height = 0;
-    }
-    
     void ShowTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer)
     {
         SDL_assert(renderer != nullptr);

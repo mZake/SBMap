@@ -224,15 +224,6 @@ namespace SBMap
         context.is_imgui_sdl3_init = false;
     }
     
-    static void CloseWidgets(AppContext& context)
-    {
-        CloseMapViewport(context.map_viewport);
-        CloseTilePalette(context.tile_palette);
-        
-        context.map_viewport = {};
-        context.tile_palette = {};
-    }
-    
     bool InitAppContext(AppContext& context)
     {
         context = {};
@@ -246,7 +237,6 @@ namespace SBMap
     
     void CloseAppContext(AppContext& context)
     {
-        CloseWidgets(context);
         CloseImGui(context);
         CloseSDL(context);
     }
