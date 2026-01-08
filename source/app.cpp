@@ -268,9 +268,4 @@ namespace SBMap
             SDL_RenderPresent(context.renderer);
         }
     }
-    
-    SDL_Renderer* GetRenderer()
-    {
-        return nullptr;
-    }
 }
