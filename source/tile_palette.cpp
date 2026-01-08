@@ -103,8 +103,8 @@ namespace SBMap
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 ImVec2 mouse_position = ImGui::GetMousePos() - ImGui::GetWindowPos();
-                tile_palette.selected_y = mouse_position.x / tileset.tile_width;
-                tile_palette.selected_x = mouse_position.y / tileset.tile_height;
+                tile_palette.selected_x = mouse_position.x / tileset.tile_width;
+                tile_palette.selected_y = mouse_position.y / tileset.tile_height;
             }
             
             ImTextureRef atlas_image_ref = GetTextureImGuiID(tileset.atlas);
