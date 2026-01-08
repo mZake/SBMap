@@ -34,6 +34,21 @@ namespace SBMap
     constexpr int32 MINIMUM_MAP_HEIGHT = 1;
     constexpr int32 MINIMUM_MAP_CELL_COUNT = 1;
     
+    static Error s_Error;
+    static bool s_OpenErrorWindow = false;
+    
+    static void SetError(Error error)
+    {
+        s_Error = error;
+        s_OpenErrorWindow = true;
+    }
+    
+    static void ClearError()
+    {
+        s_Error.message[0] = '\0';
+        s_OpenErrorWindow = false;
+    }
+    
     static uint32 GetMapLayerTileFlag(MapLayer layer)
     {
         switch (layer)
@@ -328,6 +343,23 @@ namespace SBMap
     
     static void OpenTilemap(MapViewport& map_viewport)
     {
+        const char* filepath = map_viewport.input_tilemap.c_str();
+        
+        SDL_PathInfo path_info;
+        if (!SDL_GetPathInfo(map_viewport.input_tilemap.c_str(), &path_info))
+        {
+            Error error = MakeError("Path '%s' not found", filepath);
+            SetError(error);
+            return;
+        }
+        
+        if (path_info.type != SDL_PATHTYPE_FILE)
+        {
+            Error error = MakeError("'%s' is not a regular file", filepath);
+            SetError(error);
+            return;
+        }
+        
         std::ifstream stream(map_viewport.input_tilemap, std::ios::binary);
         if (!stream)
             return;
@@ -451,6 +483,23 @@ namespace SBMap
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
     {
         ImGui::Begin("Map Viewport", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
+        
+        if (s_OpenErrorWindow)
+            ImGui::OpenPopup("Error");
+        
+        if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::TextUnformatted(s_Error.message);
+            s_OpenErrorWindow = false;
+            
+            if (ImGui::Button("Ok##Error", ImVec2(120, 0)))
+            {
+                ClearError();
+                ImGui::CloseCurrentPopup();
+            }
+            
+            ImGui::EndPopup();
+        }
         
         ShowMap(map_viewport, tile_palette);
         ShowProperties(map_viewport);
