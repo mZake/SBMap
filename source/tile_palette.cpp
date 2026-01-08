@@ -56,7 +56,7 @@ namespace SBMap
     }
     
     static void OpenAtlas(TilePalette& tile_palette, SDL_Renderer* renderer)
-    {        
+    {
         const char* filepath = tile_palette.input_atlas_image.c_str();
         auto atlas_result = LoadTexture(filepath, renderer);
         if (IsResultValue(atlas_result))
