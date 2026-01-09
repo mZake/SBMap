@@ -5,6 +5,10 @@ namespace SBMap
 {
     Tileset CreateTileset(Texture2D& atlas, int32 tile_width, int32 tile_height)
     {
+        SDL_assert(IsTextureValid(atlas));
+        SDL_assert(tile_width > 0);
+        SDL_assert(tile_height > 0);
+        
         Tileset tileset;
         tileset.atlas = atlas;
         tileset.tile_width = tile_width;
