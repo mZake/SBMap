@@ -20,8 +20,7 @@ set(SOURCE_FILES
     source/tile_palette.cpp
     source/tile_palette.h
     source/tilemap.cpp
-    source/tilemap.h
-    source/widget.h)
+    source/tilemap.h)
 
 add_executable(SBMap ${SOURCE_FILES})
 
