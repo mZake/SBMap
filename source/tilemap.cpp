@@ -17,19 +17,26 @@ namespace SBMap
     
     bool IsTilesetValid(const Tileset& tileset)
     {
-        bool cond1 = IsTextureValid(tileset.atlas);
-        bool cond2 = (tileset.width >= 0) && (tileset.height >= 0);
-        bool cond3 = (tileset.tile_width >= 0) && (tileset.tile_height >= 0);
+        if (!IsTextureValid(tileset.atlas))
+            return false;
         
-        return cond1 && cond2 && cond3;
+        SDL_assert(tileset.tile_width > 0);
+        SDL_assert(tileset.tile_height > 0);
+        SDL_assert(tileset.width > 0);
+        SDL_assert(tileset.height > 0);
+        
+        return true;
     }
     
-    bool IsTilemapValid(const Tilemap &tilemap)
+    bool IsTilemapValid(const Tilemap& tilemap)
     {
-        bool cond1 = (tilemap.tileset != nullptr) && IsTilesetValid(*tilemap.tileset);
-        bool cond2 = (!tilemap.cells.empty());
-        bool cond3 = (tilemap.width >= 0) && (tilemap.height >= 0);
+        if (!(tilemap.tileset && IsTilesetValid(*tilemap.tileset)))
+            return false;
         
-        return cond1 && cond2 && cond3;
+        SDL_assert(tilemap.width > 0);
+        SDL_assert(tilemap.height > 0);
+        SDL_assert(tilemap.cells.size() == (tilemap.width * tilemap.height));
+        
+        return true;
     }
 }

@@ -154,11 +154,14 @@ namespace SBMap
     
     bool IsTextureValid(const Texture2D& texture)
     {
-        return texture.handle != nullptr 
-            && texture.count != nullptr
-            && *texture.count > 0
-            && texture.width > 0
-            && texture.height > 0;
+        if (!texture.handle)
+            return false;
+        
+        SDL_assert(texture.count != nullptr);
+        SDL_assert(texture.width > 0);
+        SDL_assert(texture.height > 0);
+        
+        return true;
     }
     
     uint64 GetTextureImGuiID(const Texture2D& texture)
