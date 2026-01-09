@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "core.h"
 #include "error.h"
 #include "tile_palette.h"
@@ -21,7 +19,7 @@ namespace SBMap
     {
         Tilemap tilemap;
         MapLayer selected_layer;
-        std::string input_tilemap;
+        char input_tilemap[320];
         int32 input_width;
         int32 input_height;
         bool show_grid;

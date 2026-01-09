@@ -343,19 +343,17 @@ namespace SBMap
     
     static void OpenTilemap(MapViewport& map_viewport)
     {
-        const char* filepath = map_viewport.input_tilemap.c_str();
-        
         SDL_PathInfo path_info;
-        if (!SDL_GetPathInfo(map_viewport.input_tilemap.c_str(), &path_info))
+        if (!SDL_GetPathInfo(map_viewport.input_tilemap, &path_info))
         {
-            Error error = MakeError("Path '%s' not found", filepath);
+            Error error = MakeError("Path '%s' not found", map_viewport.input_tilemap);
             SetError(error);
             return;
         }
         
         if (path_info.type != SDL_PATHTYPE_FILE)
         {
-            Error error = MakeError("'%s' is not a regular file", filepath);
+            Error error = MakeError("'%s' is not a regular file", map_viewport.input_tilemap);
             SetError(error);
             return;
         }
@@ -444,7 +442,7 @@ namespace SBMap
         
         ImGui::Spacing();
         
-        ImGui::InputText("Tilemap", &map_viewport.input_tilemap);
+        ImGui::InputText("Tilemap", map_viewport.input_tilemap, sizeof(map_viewport.input_tilemap));
         
         if (ImGui::Button("Save##Tilemap"))
             SaveTilemap(map_viewport);
@@ -472,6 +470,7 @@ namespace SBMap
         map_viewport.tilemap.width = MINIMUM_MAP_WIDTH;
         map_viewport.tilemap.height = MINIMUM_MAP_HEIGHT;
         map_viewport.selected_layer = MapLayer::Tiles;
+        map_viewport.input_tilemap[0] = '\0';
         map_viewport.input_width = MINIMUM_MAP_WIDTH;
         map_viewport.input_height = MINIMUM_MAP_HEIGHT;
         map_viewport.show_grid = true;

@@ -57,8 +57,7 @@ namespace SBMap
     
     static void OpenAtlas(TilePalette& tile_palette, SDL_Renderer* renderer)
     {
-        const char* filepath = tile_palette.input_atlas_image.c_str();
-        auto atlas_result = LoadTexture(filepath, renderer);
+        auto atlas_result = LoadTexture(tile_palette.input_atlas_image, renderer);
         if (IsResultValue(atlas_result))
         {
             Tileset& tileset = tile_palette.tileset;
@@ -83,8 +82,7 @@ namespace SBMap
         tile_palette.tileset.atlas = {};
         tile_palette.tileset.width = 0;
         tile_palette.tileset.height = 0;
-        
-        tile_palette.input_atlas_image.clear();
+        tile_palette.input_atlas_image[0] = '\0';
     }
     
     static void ShowSelectTile(TilePalette& tile_palette)
@@ -159,7 +157,7 @@ namespace SBMap
         
         ImGui::Spacing();
         
-        ImGui::InputText("Atlas Image", &tile_palette.input_atlas_image);
+        ImGui::InputText("Atlas Image", tile_palette.input_atlas_image, sizeof(tile_palette.input_atlas_image));
         
         if (ImGui::Button("Open"))
             OpenAtlas(tile_palette, renderer);
@@ -190,6 +188,7 @@ namespace SBMap
         tile_palette.placeholder = GetResultValue(placeholder_result);
         tile_palette.selected_x = 0;
         tile_palette.selected_y = 0;
+        tile_palette.input_atlas_image[0] = '\0';
         tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
         tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;
         

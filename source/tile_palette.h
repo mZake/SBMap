@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include <SDL3/SDL.h>
 
 #include "core.h"
@@ -16,7 +14,7 @@ namespace SBMap
         Texture2D placeholder;
         int32 selected_x;
         int32 selected_y;
-        std::string input_atlas_image;
+        char input_atlas_image[320];
         int32 input_tile_width;
         int32 input_tile_height;
     };
