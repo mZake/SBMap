@@ -1,3 +1,5 @@
+#include <SDL3/SDL.h>
+
 #include "texture.h"
 #include "tilemap.h"
 
