@@ -160,7 +160,7 @@ namespace SBMap
     {
         SDL_assert(renderer != nullptr);
         
-        auto placeholder_result = LoadTexture("assets/placeholder.png", renderer);
+        auto placeholder_result = LoadTexture("assets/images/placeholder.png", renderer);
         if (IsResultError(placeholder_result))
         {
             Error error = GetResultError(placeholder_result);

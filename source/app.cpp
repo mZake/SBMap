@@ -164,7 +164,7 @@ namespace SBMap
         
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/paper-mono/PaperMono-Regular.ttf");
+        io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/paper-mono/PaperMono-Regular.ttf");
         
         SetupImGuiStyle();
         
