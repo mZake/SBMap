@@ -2,6 +2,7 @@
 #include <imgui_stdlib.h>
 
 #include "core.h"
+#include "error_popup.h"
 #include "texture.h"
 #include "tilemap.h"
 #include "tile_palette.h"
@@ -10,21 +11,6 @@ namespace SBMap
 {
     constexpr int32 MINIMUM_TILE_WIDTH = 4;
     constexpr int32 MINIMUM_TILE_HEIGHT = 4;
-    
-    static Error s_Error;
-    static bool s_OpenErrorWindow = false;
-    
-    static void SetError(Error error)
-    {
-        s_Error = error;
-        s_OpenErrorWindow = true;
-    }
-    
-    static void ClearError()
-    {
-        s_Error.message[0] = '\0';
-        s_OpenErrorWindow = false;
-    }
     
     static void ResizeTile(TilePalette& tile_palette)
     {
@@ -73,7 +59,7 @@ namespace SBMap
         else
         {
             Error error = GetResultError(atlas_result);
-            SetError(error);
+            OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
         }
     }
     
@@ -200,23 +186,6 @@ namespace SBMap
         SDL_assert(renderer != nullptr);
         
         ImGui::Begin("Tile Palette");
-        
-        if (s_OpenErrorWindow)
-            ImGui::OpenPopup("Error");
-        
-        if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::TextUnformatted(s_Error.message);
-            s_OpenErrorWindow = false;
-            
-            if (ImGui::Button("Ok##Error", ImVec2(120, 0)))
-            {
-                ClearError();
-                ImGui::CloseCurrentPopup();
-            }
-            
-            ImGui::EndPopup();
-        }
         
         ShowSelectTile(tile_palette);
         ShowProperties(tile_palette, renderer);
