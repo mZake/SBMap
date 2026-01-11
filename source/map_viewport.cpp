@@ -387,7 +387,7 @@ namespace SBMap
         {
             SDL_free(file_data);
             OpenErrorPopup("Failed to Open Tilemap",
-                "The selected SBM file has inconsistent data.\nThe cell count doesn't match the map dimensions.");
+                "The selected SBM file has inconsistent data.\nThe cell count does not match the map dimensions.");
             return;
         }
         
