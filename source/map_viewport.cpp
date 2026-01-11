@@ -1,11 +1,10 @@
-#include <fstream>
-
 #include <string.h>
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
 #include "core.h"
+#include "error_popup.h"
 #include "map_viewport.h"
 #include "tile_palette.h"
 #include "tilemap.h"
@@ -33,21 +32,6 @@ namespace SBMap
     constexpr int32 MINIMUM_MAP_WIDTH = 1;
     constexpr int32 MINIMUM_MAP_HEIGHT = 1;
     constexpr int32 MINIMUM_MAP_CELL_COUNT = 1;
-    
-    static Error s_Error;
-    static bool s_OpenErrorWindow = false;
-    
-    static void SetError(Error error)
-    {
-        s_Error = error;
-        s_OpenErrorWindow = true;
-    }
-    
-    static void ClearError()
-    {
-        s_Error.message[0] = '\0';
-        s_OpenErrorWindow = false;
-    }
     
     static uint32 GetMapLayerTileFlag(MapLayer layer)
     {
@@ -308,24 +292,28 @@ namespace SBMap
     
     static void SaveTilemap(MapViewport& map_viewport)
     {
-        std::ofstream stream(map_viewport.input_tilemap, std::ios::binary);
-        if (!stream)
-            return;
-        
         Tilemap& tilemap = map_viewport.tilemap;
+        if (!IsTilemapValid(tilemap))
+        {
+            OpenErrorPopup("Failed to Save Tilemap",
+                "The current tilemap is incomplete and cannot be saved.");
+            return;
+        }
         
-        SBMHeader sbm_header;
-        memcpy(sbm_header.magic, "SBMP", 4);
-        sbm_header.width = tilemap.width;
-        sbm_header.height = tilemap.height;
+        size_t header_size = sizeof(SBMHeader);
+        size_t cell_count = tilemap.cells.size();
+        size_t cells_size = sizeof(SBMCell) * cell_count;
+        size_t buffer_size = header_size + cells_size;
         
-        size_t sbm_header_size = sizeof(SBMHeader);
-        stream.write(reinterpret_cast<char*>(&sbm_header), sbm_header_size);
+        std::vector<uint8> buffer(buffer_size);
         
-        size_t map_cell_count = tilemap.cells.size();
-        std::vector<SBMCell> sbm_cells(map_cell_count);
+        SBMHeader header;
+        memcpy(header.magic, "SBMP", 4);
+        header.width = tilemap.width;
+        header.height = tilemap.height;
         
-        for (size_t i = 0; i < map_cell_count; i++)
+        std::vector<SBMCell> sbm_cells(tilemap.cells.size());
+        for (size_t i = 0; i < tilemap.cells.size(); i++)
         {
             MapCell& map_cell = tilemap.cells[i];
             SBMCell& sbm_cell = sbm_cells[i];
@@ -335,66 +323,80 @@ namespace SBMap
             sbm_cell.flags = map_cell.flags;
         }
         
-        size_t sbm_cells_size = map_cell_count * sizeof(SBMCell);
-        stream.write(reinterpret_cast<char*>(sbm_cells.data()), sbm_cells_size);
+        memcpy(buffer.data(), &header, header_size);
+        memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
         
-        stream.close();
+        if (!SDL_SaveFile(map_viewport.input_tilemap, buffer.data(), buffer_size))
+        {
+            OpenErrorPopup("Failed to Save Tilemap",
+                "Could not write to the selected file.");
+        }
     }
     
     static void OpenTilemap(MapViewport& map_viewport)
     {
+        const char* filepath = map_viewport.input_tilemap;
+        
         SDL_PathInfo path_info;
-        if (!SDL_GetPathInfo(map_viewport.input_tilemap, &path_info))
+        if (!SDL_GetPathInfo(filepath, &path_info))
         {
-            Error error = MakeError("Path '%s' not found", map_viewport.input_tilemap);
-            SetError(error);
+            OpenErrorPopup("Failed to Open Tilemap",
+                "The selected file was not found.");
             return;
         }
         
         if (path_info.type != SDL_PATHTYPE_FILE)
         {
-            Error error = MakeError("'%s' is not a regular file", map_viewport.input_tilemap);
-            SetError(error);
+            OpenErrorPopup("Failed to Open Tilemap",
+                "The selected item is not a file.");
             return;
         }
         
-        std::ifstream stream(map_viewport.input_tilemap, std::ios::binary);
-        if (!stream)
-            return;
-        
-        stream.seekg(0, std::ios::end);
-        size_t stream_size = stream.tellg();
-        if (stream_size < SBM_MINIMUM_SIZE)
-            return;
-        
-        stream.seekg(0, std::ios::beg);
-        
-        SBMHeader sbm_header;
-        size_t sbm_header_size = sizeof(SBMHeader);
-        stream.read(reinterpret_cast<char*>(&sbm_header), sbm_header_size);
-        
-        if (memcmp(sbm_header.magic, "SBMP", 4) != 0)
-            return;
-        
-        size_t sbm_cells_begin = stream.tellg();
-        
-        size_t sbm_cell_count = sbm_header.width * sbm_header.height;
-        size_t sbm_cells_size = sbm_cell_count * sizeof(SBMCell);
-        size_t sbm_cells_real_size = stream_size - sbm_cells_begin;
-        
-        if (sbm_cells_real_size != sbm_cells_size)
-            return;
-        
-        stream.seekg(sbm_cells_begin, std::ios::beg);
-        
-        std::vector<SBMCell> sbm_cells(sbm_cell_count);
-        stream.read(reinterpret_cast<char*>(sbm_cells.data()), sbm_cells_size);
-        
-        std::vector<MapCell> new_map_cells(sbm_cell_count);
-        
-        for (size_t i = 0; i < sbm_cell_count; i++)
+        size_t file_size;
+        char* file_data = (char*)SDL_LoadFile(filepath, &file_size);
+        if (!file_data)
         {
-            MapCell& map_cell = new_map_cells[i];
+            OpenErrorPopup("Failed to Open Tilemap",
+                "Could not load the selected file.");
+            return;
+        }
+        
+        if (file_size < SBM_MINIMUM_SIZE)
+        {
+            SDL_free(file_data);
+            OpenErrorPopup("Failed to Open Tilemap",
+                "The selected file is too small. Minimum size is %d bytes.", SBM_MINIMUM_SIZE);
+            return;
+        }
+        
+        SBMHeader header;
+        memcpy(&header, file_data, sizeof(SBMHeader));
+        if (memcmp(header.magic, "SBMP", 4) != 0)
+        {
+            SDL_free(file_data);
+            OpenErrorPopup("Failed to Open Tilemap",
+                "The selected file format is not supported.");
+            return;
+        }
+        
+        size_t cell_count = header.width * header.height;
+        size_t expected_cells_size = cell_count * sizeof(SBMCell);
+        size_t cells_size = file_size - sizeof(SBMHeader);
+        
+        if (expected_cells_size != cells_size)
+        {
+            SDL_free(file_data);
+            OpenErrorPopup("Failed to Open Tilemap",
+                "The selected SBM file has inconsistent data.\nThe cell count doesn't match the map dimensions.");
+            return;
+        }
+        
+        SBMCell* sbm_cells = (SBMCell*)(file_data + sizeof(SBMHeader));
+        std::vector<MapCell> map_cells(cell_count);
+        
+        for (size_t i = 0; i < cell_count; i++)
+        {
+            MapCell& map_cell = map_cells[i];
             SBMCell& sbm_cell = sbm_cells[i];
             
             map_cell.tile_x = sbm_cell.tile_x;
@@ -402,13 +404,13 @@ namespace SBMap
             map_cell.flags = sbm_cell.flags;
         }
         
-        map_viewport.tilemap.cells = std::move(new_map_cells);
-        map_viewport.input_width = sbm_header.width;
-        map_viewport.input_height = sbm_header.height;
+        map_viewport.tilemap.cells = std::move(map_cells);
+        map_viewport.input_width = header.width;
+        map_viewport.input_height = header.height;
         
         ResizeTilemap(map_viewport);
         
-        stream.close();
+        SDL_free(file_data);
     }
     
     static void ShowProperties(MapViewport& map_viewport)
@@ -482,23 +484,6 @@ namespace SBMap
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
     {
         ImGui::Begin("Map Viewport", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
-        
-        if (s_OpenErrorWindow)
-            ImGui::OpenPopup("Error");
-        
-        if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::TextUnformatted(s_Error.message);
-            s_OpenErrorWindow = false;
-            
-            if (ImGui::Button("Ok##Error", ImVec2(120, 0)))
-            {
-                ClearError();
-                ImGui::CloseCurrentPopup();
-            }
-            
-            ImGui::EndPopup();
-        }
         
         ShowMap(map_viewport, tile_palette);
         ShowProperties(map_viewport);
