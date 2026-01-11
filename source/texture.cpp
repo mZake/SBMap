@@ -102,10 +102,10 @@ namespace SBMap
         
         SDL_PathInfo path_info;
         if (!SDL_GetPathInfo(filepath, &path_info))
-            return MakeError("Path '%s' not found", filepath);
+            return MakeError("The selected file was not found.");
         
         if (path_info.type != SDL_PATHTYPE_FILE)
-            return MakeError("'%s' is not a regular file", filepath);
+            return MakeError("The selected item is not a file.");
         
         uint8* pixels = nullptr;
         SDL_Surface* surface = nullptr;
@@ -123,7 +123,7 @@ namespace SBMap
         if (!pixels)
         {
             cleanup_intermediate();
-            return MakeError("Image loading failed: %s", stbi_failure_reason());
+            return MakeError("Could not load image from the selected file.");
         }
         
         SDL_PixelFormat pixel_format = SDL_PIXELFORMAT_RGBA32;
@@ -131,14 +131,14 @@ namespace SBMap
         if (!surface)
         {
             cleanup_intermediate();
-            return MakeError("Surface creation failed: %s", SDL_GetError());
+            return MakeError("Could not create a surface from the image.");
         }
         
         handle = SDL_CreateTextureFromSurface(renderer, surface);
         if (!handle)
         {
             cleanup_intermediate();
-            return MakeError("Texture creation failed: %s", SDL_GetError());
+            return MakeError("Could not create a texture from the surface.");
         }
         
         cleanup_intermediate();
