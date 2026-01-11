@@ -1,4 +1,5 @@
 #include "app.h"
+#include "error_popup.h"
 #include "map_viewport.h"
 #include "tile_palette.h"
 
@@ -258,6 +259,7 @@ namespace SBMap
             
             ShowTilePalette(context.tile_palette, context.renderer);
             ShowMapViewport(context.map_viewport, context.tile_palette);
+            ShowErrorPopup();
             
             SDL_SetRenderDrawColor(context.renderer, 32, 32, 40, 255);
             SDL_RenderClear(context.renderer);
