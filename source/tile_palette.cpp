@@ -46,15 +46,11 @@ namespace SBMap
         auto atlas_result = LoadTexture(tile_palette.input_atlas_image, renderer);
         if (IsResultValue(atlas_result))
         {
-            Tileset& tileset = tile_palette.tileset;
-            
             Texture2D& atlas = GetResultValue(atlas_result);
-            int32 tile_width = tileset.tile_width;
-            int32 tile_height = tileset.tile_height;
+            int32 tile_width = tile_palette.input_tile_width;
+            int32 tile_height = tile_palette.input_tile_height;
             
-            tileset = CreateTileset(atlas, tile_width, tile_height);
-            
-            ResizeTile(tile_palette);
+            tile_palette.tileset = CreateTileset(atlas, tile_width, tile_height);
         }
         else
         {
