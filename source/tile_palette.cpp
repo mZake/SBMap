@@ -82,23 +82,36 @@ namespace SBMap
             content_size.x = tileset.atlas.width;
             content_size.y = tileset.atlas.height;
             
-            ImGui::BeginChild("TilePalette-SelectTile", content_size);
+            ImGuiChildFlags child_flags =
+                ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
+            
+            ImGuiWindowFlags window_flags =
+                ImGuiWindowFlags_HorizontalScrollbar;
+            
+            ImGui::BeginChild("TilePalette-SelectTile", ImVec2(480, 270), child_flags, window_flags);
+            
+            ImVec2 window_begin = ImGui::GetCursorScreenPos();
             
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                ImVec2 mouse_position = ImGui::GetMousePos() - ImGui::GetWindowPos();
-                tile_palette.selected_x = mouse_position.x / tileset.tile_width;
-                tile_palette.selected_y = mouse_position.y / tileset.tile_height;
+                ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
+                int32 selected_x = mouse_position.x / tileset.tile_width;
+                int32 selected_y = mouse_position.y / tileset.tile_height;
+                
+                if (selected_x >= 0 && selected_x < tileset.width &&
+                    selected_y >= 0 && selected_y < tileset.height)
+                {
+                    tile_palette.selected_x = selected_x;
+                    tile_palette.selected_y = selected_y;
+                }
             }
             
             ImTextureRef atlas_image_ref = GetTextureImGuiID(tileset.atlas);
             ImGui::Image(atlas_image_ref, content_size);
             
-            ImVec2 window_position = ImGui::GetWindowPos();
-            
             ImVec2 marker_min;
-            marker_min.x = window_position.x + tile_palette.selected_x * tileset.tile_width;
-            marker_min.y = window_position.y + tile_palette.selected_y * tileset.tile_height;
+            marker_min.x = window_begin.x + tile_palette.selected_x * tileset.tile_width;
+            marker_min.y = window_begin.y + tile_palette.selected_y * tileset.tile_height;
             
             ImVec2 marker_max;
             marker_max.x = marker_min.x + tileset.tile_width;

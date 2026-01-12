@@ -256,12 +256,20 @@ namespace SBMap
         content_size.x = tilemap.width * tileset.tile_width + 1;
         content_size.y = tilemap.height * tileset.tile_height + 1;
         
-        ImGui::BeginChild("MapViewport-Map", content_size);
+        ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_HorizontalScrollbar;
+        
+        ImGuiChildFlags child_flags =
+            ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
+        
+        ImGui::BeginChild("MapViewport-Map", ImVec2(480, 270), child_flags, window_flags);
         
         RenderTilemap(map_viewport);
         RenderTilemapOverlay(map_viewport);
         RenderGrid(map_viewport);
         RenderMarker(map_viewport, tile_palette);
+        
+        ImGui::Dummy(content_size);
         
         ImGui::EndChild();
     }
@@ -483,7 +491,7 @@ namespace SBMap
     
     void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
     {
-        ImGui::Begin("Map Viewport", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::Begin("Map Viewport");
         
         ShowMap(map_viewport, tile_palette);
         ShowProperties(map_viewport);
