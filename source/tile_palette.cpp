@@ -75,8 +75,11 @@ namespace SBMap
         if (IsTilesetValid(tileset))
         {
             ImVec2 content_size;
-            content_size.x = tileset.atlas.width;
-            content_size.y = tileset.atlas.height;
+            content_size.x = (float32)tileset.atlas.width * tile_palette.scale;
+            content_size.y = (float32)tileset.atlas.height * tile_palette.scale;
+            
+            float32 tile_width_scaled = (float32)tileset.tile_width * tile_palette.scale;
+            float32 tile_height_scaled = (float32)tileset.tile_height * tile_palette.scale;
             
             ImGuiChildFlags child_flags =
                 ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
@@ -91,8 +94,8 @@ namespace SBMap
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
-                int32 selected_x = mouse_position.x / tileset.tile_width;
-                int32 selected_y = mouse_position.y / tileset.tile_height;
+                int32 selected_x = mouse_position.x / tile_width_scaled;
+                int32 selected_y = mouse_position.y / tile_height_scaled;
                 
                 if (selected_x >= 0 && selected_x < tileset.width &&
                     selected_y >= 0 && selected_y < tileset.height)
@@ -106,12 +109,12 @@ namespace SBMap
             ImGui::Image(atlas_image_ref, content_size);
             
             ImVec2 marker_min;
-            marker_min.x = window_begin.x + tile_palette.selected_x * tileset.tile_width;
-            marker_min.y = window_begin.y + tile_palette.selected_y * tileset.tile_height;
+            marker_min.x = window_begin.x + tile_palette.selected_x * tile_width_scaled;
+            marker_min.y = window_begin.y + tile_palette.selected_y * tile_height_scaled;
             
             ImVec2 marker_max;
-            marker_max.x = marker_min.x + tileset.tile_width;
-            marker_max.y = marker_min.y + tileset.tile_height;
+            marker_max.x = marker_min.x + tile_width_scaled;
+            marker_max.y = marker_min.y + tile_height_scaled;
             
             ImColor marker_color = { 255, 255, 255, 255 };
             
@@ -139,6 +142,7 @@ namespace SBMap
         
         ImGui::BeginChild("TilePalette-Properties");
         
+        ImGui::SliderFloat("Scale", &tile_palette.scale, 0.25f, 4.0f);
         ImGui::InputInt("Tile Width", &tile_palette.input_tile_width);
         ImGui::InputInt("Tile Height", &tile_palette.input_tile_height);
         
@@ -183,6 +187,7 @@ namespace SBMap
         tile_palette.placeholder = GetResultValue(placeholder_result);
         tile_palette.selected_x = 0;
         tile_palette.selected_y = 0;
+        tile_palette.scale = 1.0f;
         tile_palette.input_atlas_image[0] = '\0';
         tile_palette.input_tile_width = MINIMUM_TILE_WIDTH;
         tile_palette.input_tile_height = MINIMUM_TILE_HEIGHT;

@@ -22,6 +22,7 @@ namespace SBMap
         char input_tilemap[320];
         int32 input_width;
         int32 input_height;
+        float32 scale;
         bool show_grid;
         bool show_marker;
     };

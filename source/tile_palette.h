@@ -14,6 +14,7 @@ namespace SBMap
         Texture2D placeholder;
         int32 selected_x;
         int32 selected_y;
+        float32 scale;
         char input_atlas_image[320];
         int32 input_tile_width;
         int32 input_tile_height;
