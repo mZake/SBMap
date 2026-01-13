@@ -13,8 +13,7 @@ namespace SBMap
         SDL_Renderer* renderer;
         TilePalette tile_palette;
         MapViewport map_viewport;
-        bool is_imgui_sdl3_init;
-        bool is_imgui_sdlren3_init;
+        bool imgui_init;
         bool running;
     };
     

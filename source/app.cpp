@@ -147,20 +147,10 @@ namespace SBMap
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+        ImGui_ImplSDL3_InitForSDLRenderer(context.window, context.renderer);
+        ImGui_ImplSDLRenderer3_Init(context.renderer);
         
-        context.is_imgui_sdl3_init = ImGui_ImplSDL3_InitForSDLRenderer(context.window, context.renderer);
-        if (!context.is_imgui_sdl3_init)
-        {
-            SDL_Log("ImGui_ImplSDL3 initialization failed");
-            return false;
-        }
-        
-        context.is_imgui_sdlren3_init = ImGui_ImplSDLRenderer3_Init(context.renderer);
-        if (!context.is_imgui_sdlren3_init)
-        {
-            SDL_Log("ImGui_ImplSDLRenderer3 initialization failed");
-            return false;
-        }
+        context.imgui_init = true;
         
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -200,7 +190,6 @@ namespace SBMap
     {
         if (context.renderer)
             SDL_DestroyRenderer(context.renderer);
-        
         if (context.window)
             SDL_DestroyWindow(context.window);
         
@@ -212,26 +201,40 @@ namespace SBMap
     
     static void CloseImGui(AppContext& context)
     {
-        if (context.is_imgui_sdlren3_init)
+        if (context.imgui_init)
+        {
             ImGui_ImplSDLRenderer3_Shutdown();
-        
-        if (context.is_imgui_sdl3_init)
             ImGui_ImplSDL3_Shutdown();
-        
-        if (ImGui::GetCurrentContext())
             ImGui::DestroyContext();
+        }
         
-        context.is_imgui_sdlren3_init = false;
-        context.is_imgui_sdl3_init = false;
+        context.imgui_init = false;
     }
     
     bool InitAppContext(AppContext& context)
     {
-        context = {};
+        context.window = nullptr;
+        context.renderer = nullptr;
+        context.imgui_init = false;
+        context.running = false;
         
-        if (!InitSDL(context))      return false;
-        if (!InitImGui(context))    return false;
-        if (!InitWidgets(context))  return false;
+        if (!InitSDL(context))
+        {
+            CloseAppContext(context);
+            return false;
+        }
+        
+        if (!InitImGui(context))
+        {
+            CloseAppContext(context);
+            return false;
+        }
+        
+        if (!InitWidgets(context))
+        {
+            CloseAppContext(context);
+            return false;
+        }
         
         return true;
     }
