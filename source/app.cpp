@@ -137,8 +137,16 @@ namespace SBMap
         }
         
         SDL_SetWindowPosition(context.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        SDL_SetRenderVSync(context.renderer, 1);
         SDL_ShowWindow(context.window);
+        
+        SDL_SetRenderVSync(context.renderer, 1);
+        
+        // TODO: Set SDL_PROP_APP_METADATA_VERSION_STRING
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "SBMap");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, "com.mzake.sbmap");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Zake");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Copyright (c) 2026 Zake");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/mZake/SBMap");
         
         return true;
     }
