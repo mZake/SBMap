@@ -5,6 +5,9 @@
 
 int main(int argc, char** argv)
 {
+    (void)argc;
+    (void)argv;
+    
     SBMap::AppContext app_context;
     if (!SBMap::InitAppContext(app_context))
         return -1;

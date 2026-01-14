@@ -299,7 +299,7 @@ namespace SBMap
         tilemap.height = map_viewport.input_height;
         
         int32 cell_count = tilemap.width * tilemap.height;
-        tilemap.cells.resize(cell_count, { -1, -1 });
+        tilemap.cells.resize(cell_count, { -1, -1, 0 });
     }
     
     static void ResetTilemap(MapViewport& map_viewport)
@@ -489,7 +489,7 @@ namespace SBMap
         MapViewport map_viewport;
         map_viewport.tilemap = {};
         map_viewport.tilemap.tileset = &tile_palette.tileset;
-        map_viewport.tilemap.cells.resize(MINIMUM_MAP_CELL_COUNT, { -1, -1 });
+        map_viewport.tilemap.cells.resize(MINIMUM_MAP_CELL_COUNT, { -1, -1, 0 });
         map_viewport.tilemap.width = MINIMUM_MAP_WIDTH;
         map_viewport.tilemap.height = MINIMUM_MAP_HEIGHT;
         map_viewport.selected_layer = MapLayer::Tiles;

@@ -41,7 +41,7 @@ namespace SBMap
         
         SDL_assert(tilemap.width > 0);
         SDL_assert(tilemap.height > 0);
-        SDL_assert(tilemap.cells.size() == (tilemap.width * tilemap.height));
+        SDL_assert(tilemap.cells.size() == size_t(tilemap.width * tilemap.height));
         
         return true;
     }
