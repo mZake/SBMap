@@ -1,7 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 project(SBMap LANGUAGES CXX)
 
-find_package(SDL3 REQUIRED)
+include(FetchContent)
+
+FetchContent_Declare(
+    SDL3
+    DOWNLOAD_EXTRACT_TIMESTAMP OFF
+    URL                 https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.2.28.zip
+    URL_HASH            SHA256=a221b497324a2e6fe0543f55fde00e241f3e3f500e4a75c01d441a117911b89d
+    FIND_PACKAGE_ARGS   3.2.28 QUIET
+)
+
+FetchContent_MakeAvailable(SDL3)
 
 add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
