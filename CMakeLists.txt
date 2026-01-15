@@ -41,4 +41,10 @@ set_target_properties(SBMap PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    target_compile_options(SBMap PRIVATE /W4)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(SBMap PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 target_link_libraries(SBMap PRIVATE ImGui::ImGui SDL3::SDL3 stb_image::stb_image)
