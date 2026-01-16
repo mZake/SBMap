@@ -28,6 +28,8 @@ namespace SBMap
         
         tileset.tile_width = tile_palette.input_tile_width;
         tileset.tile_height = tile_palette.input_tile_height;
+        tileset.width = tileset.atlas.width / tileset.tile_width;
+        tileset.height = tileset.atlas.height / tileset.tile_height;
         
         tile_palette.selected_x = 0;
         tile_palette.selected_y = 0;
