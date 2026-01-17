@@ -108,8 +108,19 @@ namespace SBMap
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
             
-            if (event.type == SDL_EVENT_QUIT)
-                context.running = false;
+            switch (event.type)
+            {
+                case SDL_EVENT_QUIT: {
+                    context.running = false;
+                } break;
+                case SDL_EVENT_KEY_DOWN: {
+                    if (event.key.key == SDLK_F11)
+                    {
+                        context.fullscreen = !context.fullscreen;
+                        SDL_SetWindowFullscreen(context.window, context.fullscreen);
+                    }
+                } break;
+            }
         }
     }
     
@@ -224,6 +235,7 @@ namespace SBMap
         context.window = nullptr;
         context.renderer = nullptr;
         context.imgui_init = false;
+        context.fullscreen = false;
         context.running = false;
         
         if (!InitSDL(context))

@@ -14,6 +14,7 @@ namespace SBMap
         TilePalette tile_palette;
         MapViewport map_viewport;
         bool imgui_init;
+        bool fullscreen;
         bool running;
     };
     
