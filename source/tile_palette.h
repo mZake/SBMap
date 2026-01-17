@@ -22,5 +22,5 @@ namespace SBMap
     
     Result<TilePalette> CreateTilePalette(SDL_Renderer* renderer);
     
-    void ShowTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer);
+    void ShowTilePalette(TilePalette& tile_palette, SDL_Window* window, SDL_Renderer* renderer);
 }

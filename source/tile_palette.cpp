@@ -1,5 +1,5 @@
 #include <imgui.h>
-#include <imgui_stdlib.h>
+#include <SDL3/SDL.h>
 
 #include "core.h"
 #include "error_popup.h"
@@ -11,6 +11,18 @@ namespace SBMap
 {
     constexpr int32 MINIMUM_TILE_WIDTH = 4;
     constexpr int32 MINIMUM_TILE_HEIGHT = 4;
+    
+    static void OpenFileDialogCallback(void* userdata, const char* const* filelist, int filter)
+    {
+        (void)filter;
+        
+        if (!filelist || !(*filelist))
+            return;
+        
+        TilePalette* tile_palette = (TilePalette*)userdata;
+        auto& input_atlas_image = tile_palette->input_atlas_image;
+        SDL_strlcpy(input_atlas_image, *filelist, sizeof(input_atlas_image));
+    }
     
     static void ResizeTile(TilePalette& tile_palette)
     {
@@ -59,6 +71,19 @@ namespace SBMap
             Error error = GetResultError(atlas_result);
             OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
         }
+    }
+    
+    static void ExploreAtlas(TilePalette& tile_palette, SDL_Window* window)
+    {
+        static SDL_DialogFileFilter filters[] = {
+            { "PNG images",  "png" },
+            { "JPEG images", "jpg;jpeg" },
+            { "All images",  "png;jpg;jpeg" },
+            { "All files",   "*" },
+        };
+        
+        SDL_ShowOpenFileDialog(OpenFileDialogCallback,
+            &tile_palette, window, filters, SDL_arraysize(filters), nullptr, false);
     }
     
     static void ResetAtlas(TilePalette& tile_palette)
@@ -138,7 +163,7 @@ namespace SBMap
         }
     }
     
-    static void ShowProperties(TilePalette& tile_palette, SDL_Renderer* renderer)
+    static void ShowProperties(TilePalette& tile_palette, SDL_Window* window, SDL_Renderer* renderer)
     {
         ImGui::SeparatorText("Properties");
         
@@ -162,6 +187,11 @@ namespace SBMap
         
         if (ImGui::Button("Open"))
             OpenAtlas(tile_palette, renderer);
+        
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Explore"))
+            ExploreAtlas(tile_palette, window);
         
         ImGui::SameLine();
         
@@ -197,14 +227,14 @@ namespace SBMap
         return tile_palette;
     }
     
-    void ShowTilePalette(TilePalette& tile_palette, SDL_Renderer* renderer)
+    void ShowTilePalette(TilePalette& tile_palette, SDL_Window* window, SDL_Renderer* renderer)
     {
         SDL_assert(renderer != nullptr);
         
         ImGui::Begin("Tile Palette");
         
         ShowSelectTile(tile_palette);
-        ShowProperties(tile_palette, renderer);
+        ShowProperties(tile_palette, window, renderer);
         
         ImGui::End();
     }
