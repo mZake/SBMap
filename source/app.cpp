@@ -1,4 +1,5 @@
 #include "app.h"
+#include "core.h"
 #include "error_popup.h"
 #include "map_viewport.h"
 #include "tile_palette.h"
@@ -132,8 +133,15 @@ namespace SBMap
             return false;
         }
         
-        SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
-        context.window = SDL_CreateWindow("SBMap", 1280, 720, window_flags);
+        float32 display_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+        context.display_scale = display_scale;
+        
+        int32 window_width = 1280.0f * display_scale;
+        int32 window_height = 720.0f * display_scale;
+        SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |
+            SDL_WINDOW_HIGH_PIXEL_DENSITY;
+        
+        context.window = SDL_CreateWindow("SBMap", window_width, window_height, window_flags);
         if (!context.window)
         {
             SDL_Log("Window creation failed: %s", SDL_GetError());
@@ -176,6 +184,9 @@ namespace SBMap
         io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/paper-mono/PaperMono-Regular.ttf");
         
         SetupImGuiStyle();
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(context.display_scale);
+        style.FontScaleDpi = context.display_scale;
         
         return true;
     }
