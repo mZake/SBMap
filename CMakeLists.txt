@@ -52,3 +52,20 @@ if (MINGW)
 endif()
 
 target_link_libraries(SBMap PRIVATE ImGui::ImGui SDL3::SDL3 stb_image::stb_image)
+
+add_custom_command(
+    TARGET SBMap
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy_directory_if_different "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:SBMap>/assets"
+)
+
+get_target_property(SDL_TYPE SDL3::SDL3 TYPE)
+if (WIN32 AND SDL_TYPE STREQUAL "SHARED_LIBRARY")
+    add_custom_command(
+        TARGET SBMap
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy_if_different "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:SBMap>"
+    )
+endif()
