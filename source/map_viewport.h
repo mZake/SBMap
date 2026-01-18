@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+
 #include "core.h"
 #include "error.h"
 #include "tile_palette.h"
@@ -29,5 +31,5 @@ namespace SBMap
     
     Result<MapViewport> CreateMapViewport(TilePalette& tile_palette);
     
-    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette);
+    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette, SDL_Window* window);
 }

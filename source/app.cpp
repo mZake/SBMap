@@ -292,7 +292,7 @@ namespace SBMap
             ImGui::DockSpaceOverViewport();
             
             ShowTilePalette(context.tile_palette, context.window, context.renderer);
-            ShowMapViewport(context.map_viewport, context.tile_palette);
+            ShowMapViewport(context.map_viewport, context.tile_palette, context.window);
             ShowErrorPopup();
             
             SDL_SetRenderDrawColor(context.renderer, 32, 32, 40, 255);

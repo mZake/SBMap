@@ -33,6 +33,18 @@ namespace SBMap
     constexpr int32 MINIMUM_MAP_HEIGHT = 1;
     constexpr int32 MINIMUM_MAP_CELL_COUNT = 1;
     
+    static void OpenFileDialogCallback(void* userdata, const char* const* filelist, int filter)
+    {
+        (void)filter;
+        
+        if (!filelist || !(*filelist))
+            return;
+        
+        MapViewport* map_viewport = (MapViewport*)userdata;
+        auto& input_tilemap = map_viewport->input_tilemap;
+        SDL_strlcpy(input_tilemap, *filelist, sizeof(input_tilemap));
+    }
+    
     static uint32 GetMapLayerTileFlag(MapLayer layer)
     {
         switch (layer)
@@ -433,7 +445,19 @@ namespace SBMap
         SDL_free(file_data);
     }
     
-    static void ShowProperties(MapViewport& map_viewport)
+    static void ExploreTilemap(MapViewport& map_viewport, SDL_Window* window)
+    {
+        static SDL_DialogFileFilter filters[] = {
+            { "SBM files", "sbm" },
+            { "All files", "*" },
+        };
+        
+        // TODO: Use the appropriate dialog type for Open/Save
+        SDL_ShowSaveFileDialog(OpenFileDialogCallback,
+            &map_viewport, window, filters, SDL_arraysize(filters), nullptr);
+    }
+    
+    static void ShowProperties(MapViewport& map_viewport, SDL_Window* window)
     {
         ImGui::SeparatorText("Properties");
         
@@ -475,6 +499,11 @@ namespace SBMap
         if (ImGui::Button("Open##Tilemap"))
             OpenTilemap(map_viewport);
         
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Explore"))
+            ExploreTilemap(map_viewport, window);
+        
         ImGui::Spacing();
         
         ImGui::Checkbox("Show Grid", &map_viewport.show_grid);
@@ -503,12 +532,12 @@ namespace SBMap
         return map_viewport;
     }
     
-    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette)
+    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette, SDL_Window* window)
     {
         ImGui::Begin("Map Viewport");
         
         ShowMap(map_viewport, tile_palette);
-        ShowProperties(map_viewport);
+        ShowProperties(map_viewport, window);
         
         ImGui::End();
     }
