@@ -3,6 +3,8 @@
 set(MINGW_PREFIX x86_64-w64-mingw32- CACHE STRING "Prefix in MinGW binaries")
 set(MINGW_ROOT /usr/x86_64-w64-mingw32 CACHE STRING "Full path to MinGW root directory")
 
+set(MINGW TRUE)
+
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 

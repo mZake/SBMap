@@ -47,4 +47,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(SBMap PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+if (MINGW)
+    target_link_options(SBMap PRIVATE -static-libgcc -static-libstdc++)
+endif()
+
 target_link_libraries(SBMap PRIVATE ImGui::ImGui SDL3::SDL3 stb_image::stb_image)
