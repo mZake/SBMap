@@ -43,7 +43,7 @@
 # Directories
 /.vscode
 /assets/tests
-/build
+/build*
 
 # ImGui INI
 imgui.ini
