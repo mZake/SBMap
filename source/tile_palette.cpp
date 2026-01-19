@@ -143,8 +143,8 @@ namespace SBMap
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
-                int32 selected_tile_x = mouse_position.x / tile_width_scaled;
-                int32 selected_tile_y = mouse_position.y / tile_height_scaled;
+                int32 selected_tile_x = (int32)(mouse_position.x / tile_width_scaled);
+                int32 selected_tile_y = (int32)(mouse_position.y / tile_height_scaled);
                 
                 if (selected_tile_x >= 0 && selected_tile_x < m_Tileset.width &&
                     selected_tile_y >= 0 && selected_tile_y < m_Tileset.height)
@@ -158,8 +158,8 @@ namespace SBMap
             ImGui::Image(atlas_image_ref, content_size);
             
             ImVec2 marker_min;
-            marker_min.x = window_begin.x + m_SelectedTileX * tile_width_scaled;
-            marker_min.y = window_begin.y + m_SelectedTileY * tile_height_scaled;
+            marker_min.x = window_begin.x + (float32)m_SelectedTileX * tile_width_scaled;
+            marker_min.y = window_begin.y + (float32)m_SelectedTileY * tile_height_scaled;
             
             ImVec2 marker_max;
             marker_max.x = marker_min.x + tile_width_scaled;
@@ -175,8 +175,8 @@ namespace SBMap
         else
         {
             ImVec2 placeholder_size;
-            placeholder_size.x = m_Placeholder.width;
-            placeholder_size.y = m_Placeholder.height;
+            placeholder_size.x = (float32)m_Placeholder.width;
+            placeholder_size.y = (float32)m_Placeholder.height;
             
             ImTextureRef placeholder_image_ref = GetTextureImGuiID(m_Placeholder);
             ImGui::Image(placeholder_image_ref, placeholder_size);

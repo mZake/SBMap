@@ -156,28 +156,29 @@ namespace SBMap
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * m_Scale;
-        float32 tile_height_scaled = tileset.tile_height * m_Scale;
+        float32 tile_width_scaled = (float32)tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = (float32)tileset.tile_height * m_Scale;
         
         for (int32 y = 0; y < m_Tilemap.height; y++)
         {
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
-                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
+                size_t cell_index = (size_t)(x + y * m_Tilemap.width);
+                MapCell& cell = m_Tilemap.cells[cell_index];
                 if (cell.tile_x < 0 || cell.tile_y < 0)
                     continue;
                 
                 ImVec2 source_min;
-                source_min.x = cell.tile_x * tileset.tile_width / (float)tileset.atlas.width;
-                source_min.y = cell.tile_y * tileset.tile_height / (float)tileset.atlas.height;
+                source_min.x = (float32)(cell.tile_x * tileset.tile_width) / (float32)tileset.atlas.width;
+                source_min.y = (float32)(cell.tile_y * tileset.tile_height) / (float32)tileset.atlas.height;
                 
                 ImVec2 source_max;
-                source_max.x = source_min.x + tileset.tile_width / (float)tileset.atlas.width;
-                source_max.y = source_min.y + tileset.tile_height / (float)tileset.atlas.height;
+                source_max.x = source_min.x + (float32)tileset.tile_width / (float32)tileset.atlas.width;
+                source_max.y = source_min.y + (float32)tileset.tile_height / (float32)tileset.atlas.height;
                 
                 ImVec2 dest_min;
-                dest_min.x = window_begin.x + x * tile_width_scaled;
-                dest_min.y = window_begin.y + y * tile_height_scaled;
+                dest_min.x = window_begin.x + (float32)x * tile_width_scaled;
+                dest_min.y = window_begin.y + (float32)y * tile_height_scaled;
                 
                 ImVec2 dest_max;
                 dest_max.x = dest_min.x + tile_width_scaled;
@@ -199,8 +200,8 @@ namespace SBMap
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * m_Scale;
-        float32 tile_height_scaled = tileset.tile_height * m_Scale;
+        float32 tile_width_scaled = (float32)tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = (float32)tileset.tile_height * m_Scale;
         
         ImColor overlay_color = { 0, 0, 0, 80 };
         
@@ -209,13 +210,14 @@ namespace SBMap
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
                 uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
-                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
+                size_t cell_index = (size_t)(x + y * m_Tilemap.width);
+                MapCell& cell = m_Tilemap.cells[cell_index];
                 if (!(cell.flags & tile_flag))
                     continue;
                 
                 ImVec2 dest_min;
-                dest_min.x = window_begin.x + x * tile_width_scaled;
-                dest_min.y = window_begin.y + y * tile_height_scaled;
+                dest_min.x = window_begin.x + (float32)x * tile_width_scaled;
+                dest_min.y = window_begin.y + (float32)y * tile_height_scaled;
                 
                 ImVec2 dest_max;
                 dest_max.x = dest_min.x + tile_width_scaled;
@@ -236,22 +238,22 @@ namespace SBMap
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * m_Scale;
-        float32 tile_height_scaled = tileset.tile_height * m_Scale;
+        float32 tile_width_scaled = (float32)tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = (float32)tileset.tile_height * m_Scale;
         
-        int32 line_width = m_Tilemap.width * tile_width_scaled;
-        int32 column_height = m_Tilemap.height * tile_height_scaled;
+        float32 line_width = (float32)m_Tilemap.width * tile_width_scaled;
+        float32 column_height = (float32)m_Tilemap.height * tile_height_scaled;
         
         ImColor color = { 255, 255, 255, 255 };
         
         for (int32 x = 0; x <= m_Tilemap.width; x++)
         {
             ImVec2 point1;
-            point1.x = window_begin.x + x * tile_width_scaled;
+            point1.x = window_begin.x + (float32)x * tile_width_scaled;
             point1.y = window_begin.y;
             
             ImVec2 point2;
-            point2.x = window_begin.x + x * tile_width_scaled;
+            point2.x = window_begin.x + (float32)x * tile_width_scaled;
             point2.y = window_begin.y + column_height;
             
             draw_list->AddLine(point1, point2, color);
@@ -261,11 +263,11 @@ namespace SBMap
         {
             ImVec2 point1;
             point1.x = window_begin.x;
-            point1.y = window_begin.y + y * tile_height_scaled;
+            point1.y = window_begin.y + (float32)y * tile_height_scaled;
             
             ImVec2 point2;
             point2.x = window_begin.x + line_width;
-            point2.y = window_begin.y + y * tile_height_scaled;
+            point2.y = window_begin.y + (float32)y * tile_height_scaled;
             
             draw_list->AddLine(point1, point2, color);
         }
@@ -281,18 +283,19 @@ namespace SBMap
         
         if (ImGui::IsWindowHovered())
         {
-            float32 tile_width_scaled = tileset.tile_width * m_Scale;
-            float32 tile_height_scaled = tileset.tile_height * m_Scale;
+            float32 tile_width_scaled = (float32)tileset.tile_width * m_Scale;
+            float32 tile_height_scaled = (float32)tileset.tile_height * m_Scale;
             
             ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
-            int32 cell_x = mouse_position.x / tile_width_scaled;
-            int32 cell_y = mouse_position.y / tile_height_scaled;
+            int32 cell_x = (int32)(mouse_position.x / tile_width_scaled);
+            int32 cell_y = (int32)(mouse_position.y / tile_height_scaled);
             
             if ((cell_x < 0) || (cell_x >= m_Tilemap.width) ||
                 (cell_y < 0) || (cell_y >= m_Tilemap.height))
                 return;
-            
-            MapCell& cell = m_Tilemap.cells[cell_x + cell_y * m_Tilemap.width];
+                
+            size_t cell_index = (size_t)(cell_x + cell_y * m_Tilemap.width);
+            MapCell& cell = m_Tilemap.cells[cell_index];
             
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -324,8 +327,8 @@ namespace SBMap
             if (m_ShowMarker)
             {
                 ImVec2 marker_min;
-                marker_min.x = window_begin.x + cell_x * tile_width_scaled;
-                marker_min.y = window_begin.y + cell_y * tile_height_scaled;
+                marker_min.x = window_begin.x + (float32)cell_x * tile_width_scaled;
+                marker_min.y = window_begin.y + (float32)cell_y * tile_height_scaled;
                 
                 ImVec2 marker_max;
                 marker_max.x = marker_min.x + tile_width_scaled;
@@ -349,7 +352,7 @@ namespace SBMap
         m_Tilemap.width = m_InputWidth;
         m_Tilemap.height = m_InputHeight;
         
-        int32 cell_count = m_Tilemap.width * m_Tilemap.height;
+        size_t cell_count = (size_t)(m_Tilemap.width * m_Tilemap.height);
         m_Tilemap.cells.resize(cell_count, { -1, -1, 0 });
     }
     
@@ -370,8 +373,8 @@ namespace SBMap
         const Tileset& tileset = *m_Tilemap.tileset;
         
         ImVec2 content_size;
-        content_size.x = (float32)m_Tilemap.width * tileset.tile_width * m_Scale + 1;
-        content_size.y = (float32)m_Tilemap.height * tileset.tile_height * m_Scale + 1;
+        content_size.x = (float32)(m_Tilemap.width * tileset.tile_width) * m_Scale + 1;
+        content_size.y = (float32)(m_Tilemap.height * tileset.tile_height) * m_Scale + 1;
         
         ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_HorizontalScrollbar;

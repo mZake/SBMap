@@ -129,8 +129,8 @@ namespace SBMap
         
         m_DisplayScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
         
-        int32 window_width = 1280.0f * m_DisplayScale;
-        int32 window_height = 720.0f * m_DisplayScale;
+        int32 window_width = (int32)(1280.0f * m_DisplayScale);
+        int32 window_height = (int32)(720.0f * m_DisplayScale);
         SDL_WindowFlags window_flags =
             SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |SDL_WINDOW_HIGH_PIXEL_DENSITY;
         

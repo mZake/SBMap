@@ -72,7 +72,8 @@ namespace SBMap
             return MakeError("The selected file format is not supported.");
         }
         
-        size_t cell_count = header.width * header.height;
+        // TODO: Check if header.width and header.height >= 0
+        size_t cell_count = (size_t)(header.width * header.height);
         size_t expected_cells_size = cell_count * sizeof(SBMCell);
         size_t cells_size = file_size - sizeof(SBMHeader);
         
