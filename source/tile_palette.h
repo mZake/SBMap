@@ -7,7 +7,7 @@
 
 namespace SBMap
 {
-    struct AppContext;
+    class AppContext;
     
     class TilePalette
     {

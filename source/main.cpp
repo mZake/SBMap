@@ -8,13 +8,11 @@ int main(int argc, char** argv)
     (void)argc;
     (void)argv;
     
-    SBMap::AppContext app_context;
-    if (!SBMap::InitAppContext(app_context))
+    SBMap::AppContext app;
+    if (!app.Init())
         return -1;
     
-    SBMap::RunApp(app_context);
-    
-    SBMap::CloseAppContext(app_context);
+    app.Run();
     
     return 0;
 }

@@ -102,7 +102,131 @@ namespace SBMap
         style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
     }
     
-    static void ProcessEvents(AppContext& context)
+    AppContext::~AppContext()
+    {
+        if (m_ImGuiInit)
+        {
+            ImGui_ImplSDLRenderer3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
+        }
+        
+        if (m_Renderer)
+            SDL_DestroyRenderer(m_Renderer);
+        if (m_Window)
+            SDL_DestroyWindow(m_Window);
+        
+        SDL_Quit();
+    }
+    
+    bool AppContext::Init()
+    {
+        if (!SDL_Init(SDL_INIT_VIDEO))
+        {
+            SDL_Log("SDL initialization failed: %s", SDL_GetError());
+            return false;
+        }
+        
+        m_DisplayScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+        
+        int32 window_width = 1280.0f * m_DisplayScale;
+        int32 window_height = 720.0f * m_DisplayScale;
+        SDL_WindowFlags window_flags =
+            SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |SDL_WINDOW_HIGH_PIXEL_DENSITY;
+        
+        m_Window = SDL_CreateWindow("SBMap", window_width, window_height, window_flags);
+        if (!m_Window)
+        {
+            SDL_Log("Window creation failed: %s", SDL_GetError());
+            return false;
+        }
+        
+        m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
+        if (!m_Renderer)
+        {
+            SDL_Log("Renderer creation failed: %s", SDL_GetError());
+            return false;
+        }
+        
+        SDL_SetWindowPosition(m_Window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        SDL_ShowWindow(m_Window);
+        
+        SDL_SetRenderVSync(m_Renderer, 1);
+        
+        // TODO: Set SDL_PROP_APP_METADATA_VERSION_STRING
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "SBMap");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, "com.mzake.sbmap");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Zake");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Copyright (c) 2026 Zake");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/mZake/SBMap");
+        
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui_ImplSDL3_InitForSDLRenderer(m_Window, m_Renderer);
+        ImGui_ImplSDLRenderer3_Init(m_Renderer);
+        
+        m_ImGuiInit = true;
+        
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/inter/Inter-Variable.ttf");
+        
+        SetupImGuiStyle();
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(m_DisplayScale);
+        style.FontScaleDpi = m_DisplayScale;
+        
+        auto tp_result = TilePalette::Create(*this);
+        if (IsResultError(tp_result))
+        {
+            Error error = GetResultError(tp_result);
+            SDL_Log("Tile Palette initialization failed: %s", error.message);
+            return false;
+        }
+        
+        auto mv_result = MapViewport::Create(*this);
+        if (IsResultError(mv_result))
+        {
+            Error error = GetResultError(mv_result);
+            SDL_Log("Map Viewport initialization failed: %s", error.message);
+            return false;
+        }
+        
+        m_TilePalette = GetResultValue(tp_result);
+        m_MapViewport = GetResultValue(mv_result);
+        
+        return true;
+    }
+    
+    void AppContext::Run()
+    {
+        m_Running = true;
+        while (m_Running)
+        {
+            ProcessEvents();
+            
+            ImGui_ImplSDLRenderer3_NewFrame();
+            ImGui_ImplSDL3_NewFrame();
+            ImGui::NewFrame();
+            
+            ImGui::DockSpaceOverViewport();
+            
+            m_TilePalette.ShowUI();
+            m_MapViewport.ShowUI();
+            
+            ShowErrorPopup();
+            
+            SDL_SetRenderDrawColor(m_Renderer, 32, 32, 40, 255);
+            SDL_RenderClear(m_Renderer);
+            
+            ImGui::Render();
+            ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_Renderer);
+            
+            SDL_RenderPresent(m_Renderer);
+        }
+    }
+    
+    void AppContext::ProcessEvents()
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -112,196 +236,16 @@ namespace SBMap
             switch (event.type)
             {
                 case SDL_EVENT_QUIT: {
-                    context.running = false;
+                    m_Running = false;
                 } break;
                 case SDL_EVENT_KEY_DOWN: {
                     if (event.key.key == SDLK_F11)
                     {
-                        context.fullscreen = !context.fullscreen;
-                        SDL_SetWindowFullscreen(context.window, context.fullscreen);
+                        m_Fullscreen = !m_Fullscreen;
+                        SDL_SetWindowFullscreen(m_Window, m_Fullscreen);
                     }
                 } break;
             }
-        }
-    }
-    
-    static bool InitSDL(AppContext& context)
-    {
-        if (!SDL_Init(SDL_INIT_VIDEO))
-        {
-            SDL_Log("SDL initialization failed: %s", SDL_GetError());
-            return false;
-        }
-        
-        float32 display_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-        context.display_scale = display_scale;
-        
-        int32 window_width = 1280.0f * display_scale;
-        int32 window_height = 720.0f * display_scale;
-        SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |
-            SDL_WINDOW_HIGH_PIXEL_DENSITY;
-        
-        context.window = SDL_CreateWindow("SBMap", window_width, window_height, window_flags);
-        if (!context.window)
-        {
-            SDL_Log("Window creation failed: %s", SDL_GetError());
-            return false;
-        }
-        
-        context.renderer = SDL_CreateRenderer(context.window, nullptr);
-        if (!context.renderer)
-        {
-            SDL_Log("Renderer creation failed: %s", SDL_GetError());
-            return false;
-        }
-        
-        SDL_SetWindowPosition(context.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        SDL_ShowWindow(context.window);
-        
-        SDL_SetRenderVSync(context.renderer, 1);
-        
-        // TODO: Set SDL_PROP_APP_METADATA_VERSION_STRING
-        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "SBMap");
-        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, "com.mzake.sbmap");
-        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Zake");
-        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Copyright (c) 2026 Zake");
-        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/mZake/SBMap");
-        
-        return true;
-    }
-    
-    static bool InitImGui(AppContext& context)
-    {
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGui_ImplSDL3_InitForSDLRenderer(context.window, context.renderer);
-        ImGui_ImplSDLRenderer3_Init(context.renderer);
-        
-        context.imgui_init = true;
-        
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/inter/Inter-Variable.ttf");
-        
-        SetupImGuiStyle();
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.ScaleAllSizes(context.display_scale);
-        style.FontScaleDpi = context.display_scale;
-        
-        return true;
-    }
-    
-    static bool InitWidgets(AppContext& context)
-    {
-        auto tile_palette_result = TilePalette::Create(context);
-        if (IsResultError(tile_palette_result))
-        {
-            Error error = GetResultError(tile_palette_result);
-            SDL_Log("Tile Palette initialization failed: %s", error.message);
-            return false;
-        }
-        
-        context.tile_palette = GetResultValue(tile_palette_result);
-        
-        auto map_viewport_result = CreateMapViewport(context.tile_palette);
-        if (IsResultError(map_viewport_result))
-        {
-            Error error = GetResultError(map_viewport_result);
-            SDL_Log("Map Viewport initialization failed: %s", error.message);
-            return false;
-        }
-        
-        context.map_viewport = GetResultValue(map_viewport_result);
-        
-        return true;
-    }
-    
-    static void CloseSDL(AppContext& context)
-    {
-        if (context.renderer)
-            SDL_DestroyRenderer(context.renderer);
-        if (context.window)
-            SDL_DestroyWindow(context.window);
-        
-        context.renderer = nullptr;
-        context.window = nullptr;
-        
-        SDL_Quit();
-    }
-    
-    static void CloseImGui(AppContext& context)
-    {
-        if (context.imgui_init)
-        {
-            ImGui_ImplSDLRenderer3_Shutdown();
-            ImGui_ImplSDL3_Shutdown();
-            ImGui::DestroyContext();
-        }
-        
-        context.imgui_init = false;
-    }
-    
-    bool InitAppContext(AppContext& context)
-    {
-        context.window = nullptr;
-        context.renderer = nullptr;
-        context.imgui_init = false;
-        context.fullscreen = false;
-        context.running = false;
-        
-        if (!InitSDL(context))
-        {
-            CloseAppContext(context);
-            return false;
-        }
-        
-        if (!InitImGui(context))
-        {
-            CloseAppContext(context);
-            return false;
-        }
-        
-        if (!InitWidgets(context))
-        {
-            CloseAppContext(context);
-            return false;
-        }
-        
-        return true;
-    }
-    
-    void CloseAppContext(AppContext& context)
-    {
-        CloseImGui(context);
-        CloseSDL(context);
-    }
-    
-    void RunApp(AppContext& context)
-    {
-        SDL_assert(context.running == false);
-        
-        context.running = true;
-        while (context.running)
-        {
-            ProcessEvents(context);
-            
-            ImGui_ImplSDLRenderer3_NewFrame();
-            ImGui_ImplSDL3_NewFrame();
-            ImGui::NewFrame();
-            
-            ImGui::DockSpaceOverViewport();
-            
-            context.tile_palette.ShowUI();
-            ShowMapViewport(context.map_viewport, context.tile_palette, context.window);
-            ShowErrorPopup();
-            
-            SDL_SetRenderDrawColor(context.renderer, 32, 32, 40, 255);
-            SDL_RenderClear(context.renderer);
-            
-            ImGui::Render();
-            ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), context.renderer);
-            
-            SDL_RenderPresent(context.renderer);
         }
     }
 }

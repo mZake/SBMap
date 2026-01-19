@@ -27,7 +27,7 @@ namespace SBMap
     
     Result<TilePalette> TilePalette::Create(AppContext& context)
     {
-        auto placeholder_result = LoadTexture("assets/images/placeholder.png", context.renderer);
+        auto placeholder_result = LoadTexture("assets/images/placeholder.png", context.GetRenderer());
         if (IsResultError(placeholder_result))
         {
             Error error = GetResultError(placeholder_result);
@@ -92,7 +92,7 @@ namespace SBMap
     
     void TilePalette::OpenAtlasImage()
     {
-        auto result = LoadTexture(m_InputAtlasImage, m_Context->renderer);
+        auto result = LoadTexture(m_InputAtlasImage, m_Context->GetRenderer());
         if (IsResultValue(result))
         {
             Texture2D& atlas_texture = GetResultValue(result);
@@ -121,7 +121,7 @@ namespace SBMap
         };
         
         SDL_ShowOpenFileDialog(OpenFileDialogCallback,
-            this, m_Context->window, filters, SDL_arraysize(filters), nullptr, false);
+            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr, false);
     }
     
     void TilePalette::ShowSelectTileSectionUI()

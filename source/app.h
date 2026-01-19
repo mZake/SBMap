@@ -8,20 +8,30 @@
 
 namespace SBMap
 {
-    struct AppContext
+    class AppContext
     {
-        SDL_Window* window;
-        SDL_Renderer* renderer;
-        TilePalette tile_palette;
-        MapViewport map_viewport;
-        float32 display_scale;
-        bool imgui_init;
-        bool fullscreen;
-        bool running;
+    public:
+        ~AppContext();
+        
+        bool Init();
+        void Run();
+        
+        SDL_Window* GetWindow() const { return m_Window; }
+        SDL_Renderer* GetRenderer() const {return m_Renderer; }
+        const TilePalette& GetTilePalette() const { return m_TilePalette; }
+        const MapViewport& GetMapViewport() const { return m_MapViewport; }
+        
+    private:
+        void ProcessEvents();
+        
+    private:
+        SDL_Window* m_Window = nullptr;
+        SDL_Renderer* m_Renderer = nullptr;
+        TilePalette m_TilePalette;
+        MapViewport m_MapViewport;
+        float32 m_DisplayScale = 0.0f;
+        bool m_ImGuiInit = false;
+        bool m_Fullscreen = false;
+        bool m_Running = false;
     };
-    
-    bool InitAppContext(AppContext& context);
-    void CloseAppContext(AppContext& context);
-    
-    void RunApp(AppContext& context);
 }

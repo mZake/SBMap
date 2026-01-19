@@ -82,7 +82,7 @@ namespace SBMap
     {
         MapViewport instance;
         instance.m_Context = &context;
-        instance.m_Tilemap.tileset = &context.tile_palette.GetTileset();
+        instance.m_Tilemap.tileset = &context.GetTilePalette().GetTileset();
         instance.m_Scale = 1.0f;
         instance.m_ShowGrid = true;
         instance.m_ShowMarker = true;
@@ -232,7 +232,7 @@ namespace SBMap
     void MapViewport::RenderTileMarker()
     {
         const Tileset& tileset = *m_Tilemap.tileset;
-        TilePalette& tile_palette = m_Context->tile_palette;
+        const TilePalette& tile_palette = m_Context->GetTilePalette();
         
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -447,7 +447,7 @@ namespace SBMap
         
         // TODO: Use the appropriate dialog type for Open/Save
         SDL_ShowSaveFileDialog(OpenFileDialogCallback,
-            this, m_Context->window, filters, SDL_arraysize(filters), nullptr);
+            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr);
     }
     
     void MapViewport::ShowMapSectionUI()

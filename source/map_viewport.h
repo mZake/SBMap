@@ -14,7 +14,7 @@ namespace SBMap
         RightGoals,
     };
     
-    struct AppContext;
+    class AppContext;
     
     class MapViewport
     {
