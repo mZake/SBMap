@@ -1,10 +1,7 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include "core.h"
 #include "error.h"
-#include "tile_palette.h"
 #include "tilemap.h"
 
 namespace SBMap
@@ -17,19 +14,41 @@ namespace SBMap
         RightGoals,
     };
     
-    struct MapViewport
+    struct AppContext;
+    
+    class MapViewport
     {
-        Tilemap tilemap;
-        MapLayer selected_layer;
-        char input_tilemap[320];
-        int32 input_width;
-        int32 input_height;
-        float32 scale;
-        bool show_grid;
-        bool show_marker;
+    public:
+        static Result<MapViewport> Create(AppContext& context);
+        
+        void ShowUI();
+        
+        void SetInputTilemap(const char* value);
+        
+    private:
+        void RenderTilemap();
+        void RenderTilemapOverlay();
+        void RenderTileGrid();
+        void RenderTileMarker();
+        
+        void SetTilemapSize();
+        void ResetTilemapSize();
+        void SaveTilemap();
+        void OpenTilemap();
+        void ExploreTilemap();
+        
+        void ShowMapSectionUI();
+        void ShowPropertiesSectionUI();
+        
+    private:
+        AppContext* m_Context = nullptr;
+        Tilemap m_Tilemap = {};
+        MapLayer m_SelectedLayer = MapLayer::Tiles;
+        float32 m_Scale = 0.0f;
+        bool m_ShowGrid = false;
+        bool m_ShowMarker = false;
+        char m_InputTilemap[320] = {0};
+        int32 m_InputWidth = 0;
+        int32 m_InputHeight = 0;
     };
-    
-    Result<MapViewport> CreateMapViewport(TilePalette& tile_palette);
-    
-    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette, SDL_Window* window);
 }

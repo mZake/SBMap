@@ -1,16 +1,16 @@
-#include <string.h>
-
 #include <imgui.h>
-#include <imgui_stdlib.h>
 
+#include "app.h"
 #include "core.h"
 #include "error_popup.h"
+#include "error.h"
 #include "map_viewport.h"
 #include "tile_palette.h"
 #include "tilemap.h"
 
 namespace SBMap
 {
+
 #pragma pack(push, 1)
     struct SBMHeader
     {
@@ -31,8 +31,7 @@ namespace SBMap
     
     constexpr int32 MINIMUM_MAP_WIDTH = 1;
     constexpr int32 MINIMUM_MAP_HEIGHT = 1;
-    constexpr int32 MINIMUM_MAP_CELL_COUNT = 1;
-    
+        
     static void OpenFileDialogCallback(void* userdata, const char* const* filelist, int filter)
     {
         (void)filter;
@@ -41,8 +40,7 @@ namespace SBMap
             return;
         
         MapViewport* map_viewport = (MapViewport*)userdata;
-        auto& input_tilemap = map_viewport->input_tilemap;
-        SDL_strlcpy(input_tilemap, *filelist, sizeof(input_tilemap));
+        map_viewport->SetInputTilemap(*filelist);
     }
     
     static uint32 GetMapLayerTileFlag(MapLayer layer)
@@ -54,6 +52,9 @@ namespace SBMap
             case MapLayer::LeftGoals:   return TILE_FLAGS_LEFT_GOAL;
             case MapLayer::RightGoals:  return TILE_FLAGS_RIGHT_GOAL;
         }
+        
+        SDL_assert(false);
+        return 0;
     }
     
     static const char* GetMapLayerPreview(MapLayer layer)
@@ -65,6 +66,9 @@ namespace SBMap
             case MapLayer::LeftGoals:   return "Left Goals";
             case MapLayer::RightGoals:  return "Right Goals";
         }
+        
+        SDL_assert(false);
+        return nullptr;
     }
     
     static void SelectableMapLayer(MapLayer layer, MapLayer& selected)
@@ -74,22 +78,50 @@ namespace SBMap
             selected = layer;
     }
     
-    static void RenderTilemap(MapViewport& map_viewport)
+    Result<MapViewport> MapViewport::Create(AppContext& context)
     {
-        Tilemap& tilemap = map_viewport.tilemap;
-        const Tileset& tileset = *tilemap.tileset;
+        MapViewport instance;
+        instance.m_Context = &context;
+        instance.m_Tilemap.tileset = &context.tile_palette.GetTileset();
+        instance.m_Scale = 1.0f;
+        instance.m_ShowGrid = true;
+        instance.m_ShowMarker = true;
+        instance.ResetTilemapSize();
+        
+        return instance;
+    }
+    
+    void MapViewport::ShowUI()
+    {
+        ImGui::Begin("Map Viewport");
+        
+        ShowMapSectionUI();
+        ShowPropertiesSectionUI();
+        
+        ImGui::End();
+    }
+    
+    void MapViewport::SetInputTilemap(const char* value)
+    {
+        SDL_assert(value != nullptr);
+        SDL_strlcpy(m_InputTilemap, value, sizeof(m_InputTilemap));
+    }
+    
+    void MapViewport::RenderTilemap()
+    {
+        const Tileset& tileset = *m_Tilemap.tileset;
         
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * map_viewport.scale;
-        float32 tile_height_scaled = tileset.tile_height * map_viewport.scale;
+        float32 tile_width_scaled = tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = tileset.tile_height * m_Scale;
         
-        for (int32 y = 0; y < tilemap.height; y++)
+        for (int32 y = 0; y < m_Tilemap.height; y++)
         {
-            for (int32 x = 0; x < tilemap.width; x++)
+            for (int32 x = 0; x < m_Tilemap.width; x++)
             {
-                MapCell& cell = tilemap.cells[x + y * tilemap.width];
+                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
                 if (cell.tile_x < 0 || cell.tile_y < 0)
                     continue;
                 
@@ -115,28 +147,27 @@ namespace SBMap
         }
     }
     
-    static void RenderTilemapOverlay(MapViewport& map_viewport)
+    void MapViewport::RenderTilemapOverlay()
     {
-        if (map_viewport.selected_layer == MapLayer::Tiles)
+        if (m_SelectedLayer == MapLayer::Tiles)
             return;
         
-        Tilemap& tilemap = map_viewport.tilemap;
-        const Tileset& tileset = *tilemap.tileset;
+        const Tileset& tileset = *m_Tilemap.tileset;
         
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * map_viewport.scale;
-        float32 tile_height_scaled = tileset.tile_height * map_viewport.scale;
+        float32 tile_width_scaled = tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = tileset.tile_height * m_Scale;
         
         ImColor overlay_color = { 0, 0, 0, 80 };
         
-        for (int32 y = 0; y < tilemap.height; y++)
+        for (int32 y = 0; y < m_Tilemap.height; y++)
         {
-            for (int32 x = 0; x < tilemap.width; x++)
+            for (int32 x = 0; x < m_Tilemap.width; x++)
             {
-                uint32_t tile_flag = GetMapLayerTileFlag(map_viewport.selected_layer);
-                MapCell& cell = tilemap.cells[x + y * tilemap.width];
+                uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
+                MapCell& cell = m_Tilemap.cells[x + y * m_Tilemap.width];
                 if (!(cell.flags & tile_flag))
                     continue;
                 
@@ -153,26 +184,25 @@ namespace SBMap
         }
     }
     
-    static void RenderGrid(MapViewport& map_viewport)
+    void MapViewport::RenderTileGrid()
     {
-        if (!map_viewport.show_grid)
+        if (!m_ShowGrid)
             return;
         
-        Tilemap& tilemap = map_viewport.tilemap;
-        const Tileset& tileset = *tilemap.tileset;
+        const Tileset& tileset = *m_Tilemap.tileset;
         
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
-        float32 tile_width_scaled = tileset.tile_width * map_viewport.scale;
-        float32 tile_height_scaled = tileset.tile_height * map_viewport.scale;
-            
-        int32 line_width = tilemap.width * tile_width_scaled;
-        int32 column_height = tilemap.height * tile_height_scaled;
+        float32 tile_width_scaled = tileset.tile_width * m_Scale;
+        float32 tile_height_scaled = tileset.tile_height * m_Scale;
+        
+        int32 line_width = m_Tilemap.width * tile_width_scaled;
+        int32 column_height = m_Tilemap.height * tile_height_scaled;
         
         ImColor color = { 255, 255, 255, 255 };
         
-        for (int32 x = 0; x <= tilemap.width; x++)
+        for (int32 x = 0; x <= m_Tilemap.width; x++)
         {
             ImVec2 point1;
             point1.x = window_begin.x + x * tile_width_scaled;
@@ -185,7 +215,7 @@ namespace SBMap
             draw_list->AddLine(point1, point2, color);
         }
         
-        for (int32 y = 0; y <= tilemap.height; y++)
+        for (int32 y = 0; y <= m_Tilemap.height; y++)
         {
             ImVec2 point1;
             point1.x = window_begin.x;
@@ -199,57 +229,57 @@ namespace SBMap
         }
     }
     
-    static void RenderMarker(MapViewport& map_viewport, TilePalette& tile_palette)
+    void MapViewport::RenderTileMarker()
     {
-        Tilemap& tilemap = map_viewport.tilemap;
-        const Tileset& tileset = *tilemap.tileset;
+        const Tileset& tileset = *m_Tilemap.tileset;
+        TilePalette& tile_palette = m_Context->tile_palette;
         
         ImVec2 window_begin = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         
         if (ImGui::IsWindowHovered())
         {
-            float32 tile_width_scaled = tileset.tile_width * map_viewport.scale;
-            float32 tile_height_scaled = tileset.tile_height * map_viewport.scale;
+            float32 tile_width_scaled = tileset.tile_width * m_Scale;
+            float32 tile_height_scaled = tileset.tile_height * m_Scale;
             
             ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
             int32 cell_x = mouse_position.x / tile_width_scaled;
             int32 cell_y = mouse_position.y / tile_height_scaled;
             
-            if ((cell_x < 0) || (cell_x >= tilemap.width) ||
-                (cell_y < 0) || (cell_y >= tilemap.height))
+            if ((cell_x < 0) || (cell_x >= m_Tilemap.width) ||
+                (cell_y < 0) || (cell_y >= m_Tilemap.height))
                 return;
             
-            MapCell& cell = tilemap.cells[cell_x + cell_y * tilemap.width];
+            MapCell& cell = m_Tilemap.cells[cell_x + cell_y * m_Tilemap.width];
             
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
-                if (map_viewport.selected_layer == MapLayer::Tiles)
+                if (m_SelectedLayer == MapLayer::Tiles)
                 {
-                    cell.tile_x = tile_palette.selected_x;
-                    cell.tile_y = tile_palette.selected_y;
+                    cell.tile_x = tile_palette.GetSelectedTileX();
+                    cell.tile_y = tile_palette.GetSelectedTileY();
                 }
                 else
                 {
-                    uint32_t tile_flag = GetMapLayerTileFlag(map_viewport.selected_layer);
+                    uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
                     cell.flags |= tile_flag;
                 }
             }
             else if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
-                if (map_viewport.selected_layer == MapLayer::Tiles)
+                if (m_SelectedLayer == MapLayer::Tiles)
                 {
                     cell.tile_x = -1;
                     cell.tile_y = -1;
                 }
                 else
                 {
-                    uint32_t tile_flag = GetMapLayerTileFlag(map_viewport.selected_layer);
+                    uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
                     cell.flags &= ~tile_flag;
                 }
             }
             
-            if (map_viewport.show_marker)
+            if (m_ShowMarker)
             {
                 ImVec2 marker_min;
                 marker_min.x = window_begin.x + cell_x * tile_width_scaled;
@@ -266,66 +296,31 @@ namespace SBMap
         }
     }
     
-    static void ShowMap(MapViewport& map_viewport, TilePalette& tile_palette)
+    void MapViewport::SetTilemapSize()
     {
-        ImGui::SeparatorText("Map");
+        if (m_InputWidth < MINIMUM_MAP_WIDTH)
+            m_InputWidth = MINIMUM_MAP_WIDTH;
         
-        Tilemap& tilemap = map_viewport.tilemap;
-        const Tileset& tileset = *tilemap.tileset;
+        if (m_InputHeight < MINIMUM_MAP_HEIGHT)
+            m_InputHeight = MINIMUM_MAP_HEIGHT;
         
-        if (!IsTilemapValid(tilemap))
-            return;
+        m_Tilemap.width = m_InputWidth;
+        m_Tilemap.height = m_InputHeight;
         
-        ImVec2 content_size;
-        content_size.x = (float32)tilemap.width * tileset.tile_width * map_viewport.scale + 1;
-        content_size.y = (float32)tilemap.height * tileset.tile_height * map_viewport.scale + 1;
-        
-        ImGuiWindowFlags window_flags =
-            ImGuiWindowFlags_HorizontalScrollbar;
-        
-        ImGuiChildFlags child_flags =
-            ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
-        
-        ImGui::BeginChild("MapViewport-Map", ImVec2(480, 270), child_flags, window_flags);
-        
-        RenderTilemap(map_viewport);
-        RenderTilemapOverlay(map_viewport);
-        RenderGrid(map_viewport);
-        RenderMarker(map_viewport, tile_palette);
-        
-        ImGui::Dummy(content_size);
-        
-        ImGui::EndChild();
+        int32 cell_count = m_Tilemap.width * m_Tilemap.height;
+        m_Tilemap.cells.resize(cell_count, { -1, -1, 0 });
     }
     
-    static void ResizeTilemap(MapViewport& map_viewport)
+    void MapViewport::ResetTilemapSize()
     {
-        if (map_viewport.input_width < MINIMUM_MAP_WIDTH)
-            map_viewport.input_width = MINIMUM_MAP_WIDTH;
-        
-        if (map_viewport.input_height < MINIMUM_MAP_HEIGHT)
-            map_viewport.input_height = MINIMUM_MAP_HEIGHT;
-        
-        Tilemap& tilemap = map_viewport.tilemap;
-        tilemap.width = map_viewport.input_width;
-        tilemap.height = map_viewport.input_height;
-        
-        int32 cell_count = tilemap.width * tilemap.height;
-        tilemap.cells.resize(cell_count, { -1, -1, 0 });
+        m_InputWidth = MINIMUM_MAP_WIDTH;
+        m_InputHeight = MINIMUM_MAP_HEIGHT;
+        SetTilemapSize();
     }
     
-    static void ResetTilemap(MapViewport& map_viewport)
+    void MapViewport::SaveTilemap()
     {
-        map_viewport.input_width = MINIMUM_MAP_WIDTH;
-        map_viewport.input_height = MINIMUM_MAP_HEIGHT;
-        
-        ResizeTilemap(map_viewport);
-    }
-    
-    static void SaveTilemap(MapViewport& map_viewport)
-    {
-        Tilemap& tilemap = map_viewport.tilemap;
-        if (!IsTilemapValid(tilemap))
+        if (!IsTilemapValid(m_Tilemap))
         {
             OpenErrorPopup("Failed to Save Tilemap",
                 "The current tilemap is incomplete and cannot be saved.");
@@ -333,21 +328,21 @@ namespace SBMap
         }
         
         size_t header_size = sizeof(SBMHeader);
-        size_t cell_count = tilemap.cells.size();
+        size_t cell_count = m_Tilemap.cells.size();
         size_t cells_size = sizeof(SBMCell) * cell_count;
         size_t buffer_size = header_size + cells_size;
         
         std::vector<uint8> buffer(buffer_size);
         
         SBMHeader header;
-        memcpy(header.magic, "SBMP", 4);
-        header.width = tilemap.width;
-        header.height = tilemap.height;
+        SDL_memcpy(header.magic, "SBMP", 4);
+        header.width = m_Tilemap.width;
+        header.height = m_Tilemap.height;
         
-        std::vector<SBMCell> sbm_cells(tilemap.cells.size());
-        for (size_t i = 0; i < tilemap.cells.size(); i++)
+        std::vector<SBMCell> sbm_cells(cell_count);
+        for (size_t i = 0; i < cell_count; i++)
         {
-            MapCell& map_cell = tilemap.cells[i];
+            MapCell& map_cell = m_Tilemap.cells[i];
             SBMCell& sbm_cell = sbm_cells[i];
             
             sbm_cell.tile_x = map_cell.tile_x;
@@ -355,22 +350,20 @@ namespace SBMap
             sbm_cell.flags = map_cell.flags;
         }
         
-        memcpy(buffer.data(), &header, header_size);
-        memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
+        SDL_memcpy(buffer.data(), &header, header_size);
+        SDL_memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
         
-        if (!SDL_SaveFile(map_viewport.input_tilemap, buffer.data(), buffer_size))
+        if (!SDL_SaveFile(m_InputTilemap, buffer.data(), buffer_size))
         {
             OpenErrorPopup("Failed to Save Tilemap",
                 "Could not write to the selected file.");
         }
     }
     
-    static void OpenTilemap(MapViewport& map_viewport)
+    void MapViewport::OpenTilemap()
     {
-        const char* filepath = map_viewport.input_tilemap;
-        
         SDL_PathInfo path_info;
-        if (!SDL_GetPathInfo(filepath, &path_info))
+        if (!SDL_GetPathInfo(m_InputTilemap, &path_info))
         {
             OpenErrorPopup("Failed to Open Tilemap",
                 "The selected file was not found.");
@@ -385,7 +378,7 @@ namespace SBMap
         }
         
         size_t file_size;
-        char* file_data = (char*)SDL_LoadFile(filepath, &file_size);
+        char* file_data = (char*)SDL_LoadFile(m_InputTilemap, &file_size);
         if (!file_data)
         {
             OpenErrorPopup("Failed to Open Tilemap",
@@ -402,8 +395,8 @@ namespace SBMap
         }
         
         SBMHeader header;
-        memcpy(&header, file_data, sizeof(SBMHeader));
-        if (memcmp(header.magic, "SBMP", 4) != 0)
+        SDL_memcpy(&header, file_data, sizeof(SBMHeader));
+        if (SDL_memcmp(header.magic, "SBMP", 4) != 0)
         {
             SDL_free(file_data);
             OpenErrorPopup("Failed to Open Tilemap",
@@ -436,16 +429,16 @@ namespace SBMap
             map_cell.flags = sbm_cell.flags;
         }
         
-        map_viewport.tilemap.cells = std::move(map_cells);
-        map_viewport.input_width = header.width;
-        map_viewport.input_height = header.height;
+        m_Tilemap.cells = std::move(map_cells);
+        m_InputWidth = header.width;
+        m_InputHeight = header.height;
         
-        ResizeTilemap(map_viewport);
+        SetTilemapSize();
         
         SDL_free(file_data);
     }
     
-    static void ExploreTilemap(MapViewport& map_viewport, SDL_Window* window)
+    void MapViewport::ExploreTilemap()
     {
         static SDL_DialogFileFilter filters[] = {
             { "SBM files", "sbm" },
@@ -454,91 +447,93 @@ namespace SBMap
         
         // TODO: Use the appropriate dialog type for Open/Save
         SDL_ShowSaveFileDialog(OpenFileDialogCallback,
-            &map_viewport, window, filters, SDL_arraysize(filters), nullptr);
+            this, m_Context->window, filters, SDL_arraysize(filters), nullptr);
     }
     
-    static void ShowProperties(MapViewport& map_viewport, SDL_Window* window)
+    void MapViewport::ShowMapSectionUI()
+    {
+        ImGui::SeparatorText("Map");
+        
+        if (!IsTilemapValid(m_Tilemap))
+            return;
+        
+        const Tileset& tileset = *m_Tilemap.tileset;
+        
+        ImVec2 content_size;
+        content_size.x = (float32)m_Tilemap.width * tileset.tile_width * m_Scale + 1;
+        content_size.y = (float32)m_Tilemap.height * tileset.tile_height * m_Scale + 1;
+        
+        ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_HorizontalScrollbar;
+        
+        ImGuiChildFlags child_flags =
+            ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
+        
+        ImGui::BeginChild("MapViewport-Map", ImVec2(480, 270), child_flags, window_flags);
+        
+        RenderTilemap();
+        RenderTilemapOverlay();
+        RenderTileGrid();
+        RenderTileMarker();
+        
+        ImGui::Dummy(content_size);
+        
+        ImGui::EndChild();
+    }
+    
+    void MapViewport::ShowPropertiesSectionUI()
     {
         ImGui::SeparatorText("Properties");
         
         ImGui::BeginChild("MapViewport-Properties");
         
-        if (ImGui::BeginCombo("Layer", GetMapLayerPreview(map_viewport.selected_layer)))
+        if (ImGui::BeginCombo("Layer", GetMapLayerPreview(m_SelectedLayer)))
         {
-            SelectableMapLayer(MapLayer::Tiles, map_viewport.selected_layer);
-            SelectableMapLayer(MapLayer::Walls, map_viewport.selected_layer);
-            SelectableMapLayer(MapLayer::LeftGoals, map_viewport.selected_layer);
-            SelectableMapLayer(MapLayer::RightGoals, map_viewport.selected_layer);
+            SelectableMapLayer(MapLayer::Tiles, m_SelectedLayer);
+            SelectableMapLayer(MapLayer::Walls, m_SelectedLayer);
+            SelectableMapLayer(MapLayer::LeftGoals, m_SelectedLayer);
+            SelectableMapLayer(MapLayer::RightGoals, m_SelectedLayer);
             
             ImGui::EndCombo();
         }
         
         ImGui::Spacing();
         
-        ImGui::SliderFloat("Scale", &map_viewport.scale, 0.25f, 4.0f);
-        ImGui::InputInt("Width", &map_viewport.input_width);
-        ImGui::InputInt("Height", &map_viewport.input_height);
+        ImGui::SliderFloat("Scale", &m_Scale, 0.25f, 4.0f);
+        ImGui::InputInt("Width", &m_InputWidth);
+        ImGui::InputInt("Height", &m_InputHeight);
         
         if (ImGui::Button("Resize##Map"))
-            ResizeTilemap(map_viewport);
+            SetTilemapSize();
         
         ImGui::SameLine();
         
         if (ImGui::Button("Reset##Map"))
-            ResetTilemap(map_viewport);
+            ResetTilemapSize();
         
         ImGui::Spacing();
         
-        ImGui::InputText("Tilemap", map_viewport.input_tilemap, sizeof(map_viewport.input_tilemap));
+        ImGui::InputText("Tilemap", m_InputTilemap, sizeof(m_InputTilemap));
         
         if (ImGui::Button("Save##Tilemap"))
-            SaveTilemap(map_viewport);
+            SaveTilemap();
         
         ImGui::SameLine();
         
         if (ImGui::Button("Open##Tilemap"))
-            OpenTilemap(map_viewport);
+            OpenTilemap();
         
         ImGui::SameLine();
         
         if (ImGui::Button("Explore"))
-            ExploreTilemap(map_viewport, window);
+            ExploreTilemap();
         
         ImGui::Spacing();
         
-        ImGui::Checkbox("Show Grid", &map_viewport.show_grid);
+        ImGui::Checkbox("Show Grid", &m_ShowGrid);
         ImGui::SameLine();
-        ImGui::Checkbox("Show Marker", &map_viewport.show_marker);
+        ImGui::Checkbox("Show Marker", &m_ShowMarker);
         
         ImGui::EndChild();
-    }
-    
-    Result<MapViewport> CreateMapViewport(TilePalette& tile_palette)
-    {
-        MapViewport map_viewport;
-        map_viewport.tilemap = {};
-        map_viewport.tilemap.tileset = &tile_palette.tileset;
-        map_viewport.tilemap.cells.resize(MINIMUM_MAP_CELL_COUNT, { -1, -1, 0 });
-        map_viewport.tilemap.width = MINIMUM_MAP_WIDTH;
-        map_viewport.tilemap.height = MINIMUM_MAP_HEIGHT;
-        map_viewport.selected_layer = MapLayer::Tiles;
-        map_viewport.input_tilemap[0] = '\0';
-        map_viewport.input_width = MINIMUM_MAP_WIDTH;
-        map_viewport.input_height = MINIMUM_MAP_HEIGHT;
-        map_viewport.scale = 1.0f;
-        map_viewport.show_grid = true;
-        map_viewport.show_marker = true;
-        
-        return map_viewport;
-    }
-    
-    void ShowMapViewport(MapViewport& map_viewport, TilePalette& tile_palette, SDL_Window* window)
-    {
-        ImGui::Begin("Map Viewport");
-        
-        ShowMap(map_viewport, tile_palette);
-        ShowProperties(map_viewport, window);
-        
-        ImGui::End();
     }
 }

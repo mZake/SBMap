@@ -18,6 +18,10 @@ namespace SBMap
         
         void SetInputAtlasImage(const char* value);
         
+        int32 GetSelectedTileX() const { return m_SelectedTileX; }
+        int32 GetSelectedTileY() const { return m_SelectedTileY; }
+        const Tileset& GetTileset() const { return m_Tileset; }
+        
     private:
         void SetTileSize();
         void ResetTileSize();
