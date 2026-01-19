@@ -1,26 +1,43 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include "core.h"
 #include "error.h"
+#include "texture.h"
 #include "tilemap.h"
 
 namespace SBMap
 {
-    struct TilePalette
+    struct AppContext;
+    
+    class TilePalette
     {
-        Tileset tileset;
-        Texture2D placeholder;
-        int32 selected_x;
-        int32 selected_y;
-        float32 scale;
-        char input_atlas_image[320];
-        int32 input_tile_width;
-        int32 input_tile_height;
+    public:
+        static Result<TilePalette> Create(AppContext& context);
+        
+        void ShowUI();
+        
+        void SetInputAtlasImage(const char* value);
+        
+    private:
+        void SetTileSize();
+        void ResetTileSize();
+        
+        void OpenAtlasImage();
+        void ResetAtlasImage();
+        void ExploreAtlasImage();
+        
+        void ShowSelectTileSectionUI();
+        void ShowPropertiesSectionUI();
+        
+    private:
+        AppContext* m_Context = nullptr;
+        Texture2D m_Placeholder;
+        Tileset m_Tileset = {};
+        int32 m_SelectedTileX = 0;
+        int32 m_SelectedTileY = 0;
+        float32 m_Scale = 0.0f;
+        char m_InputAtlasImage[320] = {0};
+        int32 m_InputTileWidth = 0;
+        int32 m_InputTileHeight = 0;
     };
-    
-    Result<TilePalette> CreateTilePalette(SDL_Renderer* renderer);
-    
-    void ShowTilePalette(TilePalette& tile_palette, SDL_Window* window, SDL_Renderer* renderer);
 }

@@ -193,7 +193,7 @@ namespace SBMap
     
     static bool InitWidgets(AppContext& context)
     {
-        auto tile_palette_result = CreateTilePalette(context.renderer);
+        auto tile_palette_result = TilePalette::Create(context);
         if (IsResultError(tile_palette_result))
         {
             Error error = GetResultError(tile_palette_result);
@@ -291,7 +291,7 @@ namespace SBMap
             
             ImGui::DockSpaceOverViewport();
             
-            ShowTilePalette(context.tile_palette, context.window, context.renderer);
+            context.tile_palette.ShowUI();
             ShowMapViewport(context.map_viewport, context.tile_palette, context.window);
             ShowErrorPopup();
             
