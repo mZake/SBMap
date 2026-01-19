@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core.h"
+#include "error.h"
 #include "texture.h"
 
 namespace SBMap
@@ -40,6 +41,9 @@ namespace SBMap
     };
     
     Tileset CreateTileset(Texture2D& atlas, int32 tile_width, int32 tile_height);
+    Result<Tilemap> LoadTilemapFromDisk(const Tileset& tileset, const char* filepath);
+    Result<bool> SaveTilemapToDisk(const Tilemap& tilemap, const char* filepath);
+    
     bool IsTilesetValid(const Tileset& tileset);
     bool IsTilemapValid(const Tilemap& tilemap);
 }

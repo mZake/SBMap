@@ -10,25 +10,6 @@
 
 namespace SBMap
 {
-
-#pragma pack(push, 1)
-    struct SBMHeader
-    {
-        uint8 magic[4];
-        int32 width;
-        int32 height;
-    };
-    
-    struct SBMCell
-    {
-        int32 tile_x;
-        int32 tile_y;
-        uint32 flags;
-    };
-#pragma pack(pop)
-    
-    constexpr size_t SBM_MINIMUM_SIZE = sizeof(SBMHeader) + sizeof(SBMCell);
-    
     constexpr int32 MINIMUM_MAP_WIDTH = 1;
     constexpr int32 MINIMUM_MAP_HEIGHT = 1;
         
@@ -327,115 +308,29 @@ namespace SBMap
             return;
         }
         
-        size_t header_size = sizeof(SBMHeader);
-        size_t cell_count = m_Tilemap.cells.size();
-        size_t cells_size = sizeof(SBMCell) * cell_count;
-        size_t buffer_size = header_size + cells_size;
-        
-        std::vector<uint8> buffer(buffer_size);
-        
-        SBMHeader header;
-        SDL_memcpy(header.magic, "SBMP", 4);
-        header.width = m_Tilemap.width;
-        header.height = m_Tilemap.height;
-        
-        std::vector<SBMCell> sbm_cells(cell_count);
-        for (size_t i = 0; i < cell_count; i++)
+        auto result = SaveTilemapToDisk(m_Tilemap, m_InputTilemap);
+        if (IsResultError(result))
         {
-            MapCell& map_cell = m_Tilemap.cells[i];
-            SBMCell& sbm_cell = sbm_cells[i];
-            
-            sbm_cell.tile_x = map_cell.tile_x;
-            sbm_cell.tile_y = map_cell.tile_y;
-            sbm_cell.flags = map_cell.flags;
-        }
-        
-        SDL_memcpy(buffer.data(), &header, header_size);
-        SDL_memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
-        
-        if (!SDL_SaveFile(m_InputTilemap, buffer.data(), buffer_size))
-        {
-            OpenErrorPopup("Failed to Save Tilemap",
-                "Could not write to the selected file.");
+            const Error& error = GetResultError(result);
+            OpenErrorPopup("Failed to Save Tilemap", "%s", error.message);
         }
     }
     
     void MapViewport::OpenTilemap()
     {
-        SDL_PathInfo path_info;
-        if (!SDL_GetPathInfo(m_InputTilemap, &path_info))
+        auto result = LoadTilemapFromDisk(*m_Tilemap.tileset, m_InputTilemap);
+        if (IsResultValue(result))
         {
-            OpenErrorPopup("Failed to Open Tilemap",
-                "The selected file was not found.");
-            return;
+            Tilemap& tilemap = GetResultValue(result);
+            m_Tilemap = std::move(tilemap);
+            m_InputWidth = m_Tilemap.width;
+            m_InputHeight = m_Tilemap.height;
         }
-        
-        if (path_info.type != SDL_PATHTYPE_FILE)
+        else
         {
-            OpenErrorPopup("Failed to Open Tilemap",
-                "The selected item is not a file.");
-            return;
+            const Error& error = GetResultError(result);
+            OpenErrorPopup("Failed to Open Tilemap", "%s", error.message);
         }
-        
-        size_t file_size;
-        char* file_data = (char*)SDL_LoadFile(m_InputTilemap, &file_size);
-        if (!file_data)
-        {
-            OpenErrorPopup("Failed to Open Tilemap",
-                "Could not load the selected file.");
-            return;
-        }
-        
-        if (file_size < SBM_MINIMUM_SIZE)
-        {
-            SDL_free(file_data);
-            OpenErrorPopup("Failed to Open Tilemap",
-                "The selected file is too small. Minimum size is %d bytes.", SBM_MINIMUM_SIZE);
-            return;
-        }
-        
-        SBMHeader header;
-        SDL_memcpy(&header, file_data, sizeof(SBMHeader));
-        if (SDL_memcmp(header.magic, "SBMP", 4) != 0)
-        {
-            SDL_free(file_data);
-            OpenErrorPopup("Failed to Open Tilemap",
-                "The selected file format is not supported.");
-            return;
-        }
-        
-        size_t cell_count = header.width * header.height;
-        size_t expected_cells_size = cell_count * sizeof(SBMCell);
-        size_t cells_size = file_size - sizeof(SBMHeader);
-        
-        if (expected_cells_size != cells_size)
-        {
-            SDL_free(file_data);
-            OpenErrorPopup("Failed to Open Tilemap",
-                "The selected SBM file has inconsistent data.\nThe cell count does not match the map dimensions.");
-            return;
-        }
-        
-        SBMCell* sbm_cells = (SBMCell*)(file_data + sizeof(SBMHeader));
-        std::vector<MapCell> map_cells(cell_count);
-        
-        for (size_t i = 0; i < cell_count; i++)
-        {
-            MapCell& map_cell = map_cells[i];
-            SBMCell& sbm_cell = sbm_cells[i];
-            
-            map_cell.tile_x = sbm_cell.tile_x;
-            map_cell.tile_y = sbm_cell.tile_y;
-            map_cell.flags = sbm_cell.flags;
-        }
-        
-        m_Tilemap.cells = std::move(map_cells);
-        m_InputWidth = header.width;
-        m_InputHeight = header.height;
-        
-        SetTilemapSize();
-        
-        SDL_free(file_data);
     }
     
     void MapViewport::ExploreTilemap()
