@@ -16,7 +16,9 @@ namespace SBMap
         
         void ShowUI();
         
-        void SetInputAtlasImage(const char* value);
+        void OpenAtlas();
+        void OpenAtlasFile(const char* filepath);
+        void RemoveAtlas();
         
         int32 GetSelectedTileX() const { return m_SelectedTileX; }
         int32 GetSelectedTileY() const { return m_SelectedTileY; }
@@ -25,10 +27,6 @@ namespace SBMap
     private:
         void SetTileSize();
         void ResetTileSize();
-        
-        void OpenAtlasImage();
-        void ResetAtlasImage();
-        void ExploreAtlasImage();
         
         void ShowSelectTileSectionUI();
         void ShowPropertiesSectionUI();
@@ -40,7 +38,6 @@ namespace SBMap
         int32 m_SelectedTileX = 0;
         int32 m_SelectedTileY = 0;
         float32 m_Scale = 0.0f;
-        char m_InputAtlasImage[320] = {0};
         int32 m_InputTileWidth = 0;
         int32 m_InputTileHeight = 0;
     };

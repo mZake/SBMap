@@ -23,7 +23,10 @@ namespace SBMap
         
         void ShowUI();
         
-        void SetInputTilemap(const char* value);
+        void OpenTilemap();
+        void OpenTilemapFile(const char* filepath);
+        void SaveTilemap();
+        void SaveTilemapFile(const char* filepath);
         
     private:
         void RenderTilemap();
@@ -33,9 +36,6 @@ namespace SBMap
         
         void SetTilemapSize();
         void ResetTilemapSize();
-        void SaveTilemap();
-        void OpenTilemap();
-        void ExploreTilemap();
         
         void ShowMapSectionUI();
         void ShowPropertiesSectionUI();
@@ -47,7 +47,6 @@ namespace SBMap
         float32 m_Scale = 0.0f;
         bool m_ShowGrid = false;
         bool m_ShowMarker = false;
-        char m_InputTilemap[320] = {0};
         int32 m_InputWidth = 0;
         int32 m_InputHeight = 0;
     };

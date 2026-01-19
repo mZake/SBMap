@@ -22,7 +22,7 @@ namespace SBMap
             return;
         
         TilePalette* tile_palette = (TilePalette*)userdata;
-        tile_palette->SetInputAtlasImage(*filelist);
+        tile_palette->OpenAtlasFile(*filelist);
     }
     
     Result<TilePalette> TilePalette::Create(AppContext& context)
@@ -56,10 +56,37 @@ namespace SBMap
         ImGui::End();
     }
     
-    void TilePalette::SetInputAtlasImage(const char* value)
+    void TilePalette::OpenAtlas()
     {
-        SDL_assert(value != nullptr);
-        SDL_strlcpy(m_InputAtlasImage, value, sizeof(m_InputAtlasImage));
+        static SDL_DialogFileFilter filters[] = {
+            { "PNG images",  "png" },
+            { "JPEG images", "jpg;jpeg" },
+            { "All images",  "png;jpg;jpeg" },
+            { "All files",   "*" },
+        };
+        
+        SDL_ShowOpenFileDialog(OpenFileDialogCallback,
+            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr, false);
+    }
+    
+    void TilePalette::OpenAtlasFile(const char* filepath)
+    {
+        auto result = LoadTexture(filepath, m_Context->GetRenderer());
+        if (IsResultValue(result))
+        {
+            Texture2D& atlas_texture = GetResultValue(result);
+            m_Tileset = CreateTileset(atlas_texture, m_InputTileWidth, m_InputTileHeight);
+        }
+        else
+        {
+            const Error& error = GetResultError(result);
+            OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
+        }
+    }
+    
+    void TilePalette::RemoveAtlas()
+    {
+        m_Tileset = {};
     }
     
     void TilePalette::SetTileSize()
@@ -88,40 +115,6 @@ namespace SBMap
         m_InputTileWidth = MINIMUM_TILE_WIDTH;
         m_InputTileHeight = MINIMUM_TILE_HEIGHT;
         SetTileSize();
-    }
-    
-    void TilePalette::OpenAtlasImage()
-    {
-        auto result = LoadTexture(m_InputAtlasImage, m_Context->GetRenderer());
-        if (IsResultValue(result))
-        {
-            Texture2D& atlas_texture = GetResultValue(result);
-            m_Tileset = CreateTileset(atlas_texture, m_InputTileWidth, m_InputTileHeight);
-        }
-        else
-        {
-            Error error = GetResultError(result);
-            OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
-        }
-    }
-    
-    void TilePalette::ResetAtlasImage()
-    {
-        m_Tileset = {};
-        m_InputAtlasImage[0] = '\0';
-    }
-    
-    void TilePalette::ExploreAtlasImage()
-    {
-        static SDL_DialogFileFilter filters[] = {
-            { "PNG images",  "png" },
-            { "JPEG images", "jpg;jpeg" },
-            { "All images",  "png;jpg;jpeg" },
-            { "All files",   "*" },
-        };
-        
-        SDL_ShowOpenFileDialog(OpenFileDialogCallback,
-            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr, false);
     }
     
     void TilePalette::ShowSelectTileSectionUI()
@@ -207,23 +200,6 @@ namespace SBMap
         
         if (ImGui::Button("Reset##Tile"))
             ResetTileSize();
-        
-        ImGui::Spacing();
-        
-        ImGui::InputText("Atlas Image", m_InputAtlasImage, sizeof(m_InputAtlasImage));
-        
-        if (ImGui::Button("Open"))
-            OpenAtlasImage();
-        
-        ImGui::SameLine();
-        
-        if (ImGui::Button("Explore"))
-            ExploreAtlasImage();
-        
-        ImGui::SameLine();
-        
-        if (ImGui::Button("Reset##Atlas"))
-            ResetAtlasImage();
         
         ImGui::EndChild();
     }

@@ -21,7 +21,18 @@ namespace SBMap
             return;
         
         MapViewport* map_viewport = (MapViewport*)userdata;
-        map_viewport->SetInputTilemap(*filelist);
+        map_viewport->OpenTilemapFile(*filelist);
+    }
+    
+    static void SaveFileDialogCallback(void* userdata, const char* const* filelist, int filter)
+    {
+        (void)filter;
+        
+        if (!filelist || !(*filelist))
+            return;
+        
+        MapViewport* map_viewport = (MapViewport*)userdata;
+        map_viewport->SaveTilemapFile(*filelist);
     }
     
     static uint32 GetMapLayerTileFlag(MapLayer layer)
@@ -82,10 +93,60 @@ namespace SBMap
         ImGui::End();
     }
     
-    void MapViewport::SetInputTilemap(const char* value)
+    void MapViewport::OpenTilemap()
     {
-        SDL_assert(value != nullptr);
-        SDL_strlcpy(m_InputTilemap, value, sizeof(m_InputTilemap));
+        static SDL_DialogFileFilter filters[] = {
+            { "SBM files", "sbm" },
+            { "All files", "*" },
+        };
+        
+        SDL_ShowOpenFileDialog(OpenFileDialogCallback,
+            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr, false);
+    }
+    
+    void MapViewport::OpenTilemapFile(const char* filepath)
+    {
+        auto result = LoadTilemapFromDisk(*m_Tilemap.tileset, filepath);
+        if (IsResultValue(result))
+        {
+            Tilemap& tilemap = GetResultValue(result);
+            m_Tilemap = std::move(tilemap);
+            m_InputWidth = m_Tilemap.width;
+            m_InputHeight = m_Tilemap.height;
+        }
+        else
+        {
+            const Error& error = GetResultError(result);
+            OpenErrorPopup("Failed to Open Tilemap", "%s", error.message);
+        }
+    }
+    
+    void MapViewport::SaveTilemap()
+    {
+        static SDL_DialogFileFilter filters[] = {
+            { "SBM files", "sbm" },
+            { "All files", "*" },
+        };
+        
+        if (!IsTilemapValid(m_Tilemap))
+        {
+            OpenErrorPopup("Failed to Save Tilemap",
+                "The current tilemap is incomplete and cannot be saved.");
+            return;
+        }
+        
+        SDL_ShowSaveFileDialog(SaveFileDialogCallback,
+            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr);
+    }
+    
+    void MapViewport::SaveTilemapFile(const char* filepath)
+    {
+        auto result = SaveTilemapToDisk(m_Tilemap, filepath);
+        if (IsResultError(result))
+        {
+            const Error& error = GetResultError(result);
+            OpenErrorPopup("Failed to Save Tilemap", "%s", error.message);
+        }
     }
     
     void MapViewport::RenderTilemap()
@@ -299,52 +360,6 @@ namespace SBMap
         SetTilemapSize();
     }
     
-    void MapViewport::SaveTilemap()
-    {
-        if (!IsTilemapValid(m_Tilemap))
-        {
-            OpenErrorPopup("Failed to Save Tilemap",
-                "The current tilemap is incomplete and cannot be saved.");
-            return;
-        }
-        
-        auto result = SaveTilemapToDisk(m_Tilemap, m_InputTilemap);
-        if (IsResultError(result))
-        {
-            const Error& error = GetResultError(result);
-            OpenErrorPopup("Failed to Save Tilemap", "%s", error.message);
-        }
-    }
-    
-    void MapViewport::OpenTilemap()
-    {
-        auto result = LoadTilemapFromDisk(*m_Tilemap.tileset, m_InputTilemap);
-        if (IsResultValue(result))
-        {
-            Tilemap& tilemap = GetResultValue(result);
-            m_Tilemap = std::move(tilemap);
-            m_InputWidth = m_Tilemap.width;
-            m_InputHeight = m_Tilemap.height;
-        }
-        else
-        {
-            const Error& error = GetResultError(result);
-            OpenErrorPopup("Failed to Open Tilemap", "%s", error.message);
-        }
-    }
-    
-    void MapViewport::ExploreTilemap()
-    {
-        static SDL_DialogFileFilter filters[] = {
-            { "SBM files", "sbm" },
-            { "All files", "*" },
-        };
-        
-        // TODO: Use the appropriate dialog type for Open/Save
-        SDL_ShowSaveFileDialog(OpenFileDialogCallback,
-            this, m_Context->GetWindow(), filters, SDL_arraysize(filters), nullptr);
-    }
-    
     void MapViewport::ShowMapSectionUI()
     {
         ImGui::SeparatorText("Map");
@@ -405,23 +420,6 @@ namespace SBMap
         
         if (ImGui::Button("Reset##Map"))
             ResetTilemapSize();
-        
-        ImGui::Spacing();
-        
-        ImGui::InputText("Tilemap", m_InputTilemap, sizeof(m_InputTilemap));
-        
-        if (ImGui::Button("Save##Tilemap"))
-            SaveTilemap();
-        
-        ImGui::SameLine();
-        
-        if (ImGui::Button("Open##Tilemap"))
-            OpenTilemap();
-        
-        ImGui::SameLine();
-        
-        if (ImGui::Button("Explore"))
-            ExploreTilemap();
         
         ImGui::Spacing();
         

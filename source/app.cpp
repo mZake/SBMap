@@ -209,6 +209,28 @@ namespace SBMap
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
             
+            if (ImGui::BeginMainMenuBar())
+            {
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("Open Atlas"))
+                        m_TilePalette.OpenAtlas();
+                    if (ImGui::MenuItem("Remove Atlas"))
+                        m_TilePalette.RemoveAtlas();
+                    
+                    ImGui::Separator();
+                    
+                    if (ImGui::MenuItem("Open Tilemap"))
+                        m_MapViewport.OpenTilemap();
+                    if (ImGui::MenuItem("Save Tilemap"))
+                        m_MapViewport.SaveTilemap();
+                    
+                    ImGui::EndMenu();
+                }
+                
+                ImGui::EndMainMenuBar();
+            }
+            
             ImGui::DockSpaceOverViewport();
             
             m_TilePalette.ShowUI();
