@@ -44,7 +44,7 @@ set_target_properties(SBMap PROPERTIES
 if(MSVC)
     target_compile_options(SBMap PRIVATE /W4)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(SBMap PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(SBMap PRIVATE -Wall -Wconversion -Wextra -Wpedantic)
 endif()
 
 if (MINGW)
