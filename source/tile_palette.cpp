@@ -30,7 +30,7 @@ namespace SBMap
         auto placeholder_result = LoadTexture("assets/images/placeholder.png", context.GetRenderer());
         if (IsResultError(placeholder_result))
         {
-            Error error = GetResultError(placeholder_result);
+            const Error& error = GetResultError(placeholder_result);
             return MakeError("Placeholder texture loading failed: %s", error.message);
         }
         

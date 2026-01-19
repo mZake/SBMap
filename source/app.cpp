@@ -179,7 +179,7 @@ namespace SBMap
         auto tp_result = TilePalette::Create(*this);
         if (IsResultError(tp_result))
         {
-            Error error = GetResultError(tp_result);
+            const Error& error = GetResultError(tp_result);
             SDL_Log("Tile Palette initialization failed: %s", error.message);
             return false;
         }
@@ -187,7 +187,7 @@ namespace SBMap
         auto mv_result = MapViewport::Create(*this);
         if (IsResultError(mv_result))
         {
-            Error error = GetResultError(mv_result);
+            const Error& error = GetResultError(mv_result);
             SDL_Log("Map Viewport initialization failed: %s", error.message);
             return false;
         }
