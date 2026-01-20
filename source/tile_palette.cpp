@@ -31,7 +31,7 @@ namespace SBMap
         if (IsResultError(placeholder_result))
         {
             const Error& error = GetResultError(placeholder_result);
-            return MakeError("Placeholder texture loading failed: %s", error.message);
+            return MakeError("Failed to load placeholder texture: %s", error.message);
         }
         
         TilePalette instance;
