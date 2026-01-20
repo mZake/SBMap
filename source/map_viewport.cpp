@@ -163,8 +163,7 @@ namespace SBMap
         {
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
-                size_t cell_index = (size_t)(x + y * m_Tilemap.width);
-                MapCell& cell = m_Tilemap.cells[cell_index];
+                MapCell& cell = GetTilemapCell(m_Tilemap, x, y);
                 if (cell.tile_x < 0 || cell.tile_y < 0)
                     continue;
                 
@@ -210,8 +209,7 @@ namespace SBMap
             for (int32 x = 0; x < m_Tilemap.width; x++)
             {
                 uint32_t tile_flag = GetMapLayerTileFlag(m_SelectedLayer);
-                size_t cell_index = (size_t)(x + y * m_Tilemap.width);
-                MapCell& cell = m_Tilemap.cells[cell_index];
+                MapCell& cell = GetTilemapCell(m_Tilemap, x, y);
                 if (!(cell.flags & tile_flag))
                     continue;
                 
@@ -287,15 +285,13 @@ namespace SBMap
             float32 tile_height_scaled = (float32)tileset.tile_height * m_Scale;
             
             ImVec2 mouse_position = ImGui::GetMousePos() - window_begin;
-            int32 cell_x = (int32)(mouse_position.x / tile_width_scaled);
-            int32 cell_y = (int32)(mouse_position.y / tile_height_scaled);
+            int32 hovered_cell_x = (int32)(mouse_position.x / tile_width_scaled);
+            int32 hovered_cell_y = (int32)(mouse_position.y / tile_height_scaled);
             
-            if ((cell_x < 0) || (cell_x >= m_Tilemap.width) ||
-                (cell_y < 0) || (cell_y >= m_Tilemap.height))
+            if (!IsInTilemapBounds(m_Tilemap, hovered_cell_x, hovered_cell_y))
                 return;
-                
-            size_t cell_index = (size_t)(cell_x + cell_y * m_Tilemap.width);
-            MapCell& cell = m_Tilemap.cells[cell_index];
+            
+            MapCell& cell = GetTilemapCell(m_Tilemap, hovered_cell_x, hovered_cell_y);
             
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -327,8 +323,8 @@ namespace SBMap
             if (m_ShowMarker)
             {
                 ImVec2 marker_min;
-                marker_min.x = window_begin.x + (float32)cell_x * tile_width_scaled;
-                marker_min.y = window_begin.y + (float32)cell_y * tile_height_scaled;
+                marker_min.x = window_begin.x + (float32)hovered_cell_x * tile_width_scaled;
+                marker_min.y = window_begin.y + (float32)hovered_cell_y * tile_height_scaled;
                 
                 ImVec2 marker_max;
                 marker_max.x = marker_min.x + tile_width_scaled;

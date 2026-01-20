@@ -146,8 +146,7 @@ namespace SBMap
                 int32 selected_tile_x = (int32)(mouse_position.x / tile_width_scaled);
                 int32 selected_tile_y = (int32)(mouse_position.y / tile_height_scaled);
                 
-                if (selected_tile_x >= 0 && selected_tile_x < m_Tileset.width &&
-                    selected_tile_y >= 0 && selected_tile_y < m_Tileset.height)
+                if (IsInTilesetBounds(m_Tileset, selected_tile_x, selected_tile_y))
                 {
                     m_SelectedTileX = selected_tile_x;
                     m_SelectedTileY = selected_tile_y;
