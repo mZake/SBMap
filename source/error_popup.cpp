@@ -72,4 +72,16 @@ namespace SBMap
             ImGui::EndPopup();
         }
     }
+    
+    void OpenNativeErrorPopup(const char* title, const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
+        char message[1024];
+        SDL_vsnprintf(message, sizeof(message), format, args);
+        va_end(args);
+        
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr))
+            SDL_Log("%s", message);
+    }
 }
