@@ -213,16 +213,16 @@ namespace SBMap
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if (ImGui::MenuItem("Open Atlas"))
+                    if (ImGui::MenuItem("Open Atlas", "Ctrl+O"))
                         m_TilePalette.OpenAtlas();
-                    if (ImGui::MenuItem("Remove Atlas"))
+                    if (ImGui::MenuItem("Remove Atlas", "Ctrl+R"))
                         m_TilePalette.RemoveAtlas();
                     
                     ImGui::Separator();
                     
-                    if (ImGui::MenuItem("Open Tilemap"))
+                    if (ImGui::MenuItem("Open Tilemap", "Ctrl+Shift+O"))
                         m_MapViewport.OpenTilemap();
-                    if (ImGui::MenuItem("Save Tilemap"))
+                    if (ImGui::MenuItem("Save Tilemap", "Ctrl+Shift+S"))
                         m_MapViewport.SaveTilemap();
                     
                     ImGui::EndMenu();
@@ -265,6 +265,23 @@ namespace SBMap
                     {
                         m_Fullscreen = !m_Fullscreen;
                         SDL_SetWindowFullscreen(m_Window, m_Fullscreen);
+                    }
+                    else if (event.key.key == SDLK_O)
+                    {
+                        if ((event.key.mod & SDL_KMOD_CTRL) && (event.key.mod & SDL_KMOD_SHIFT))
+                            m_MapViewport.OpenTilemap();
+                        else if (event.key.mod & SDL_KMOD_CTRL)
+                            m_TilePalette.OpenAtlas();
+                    }
+                    else if (event.key.key == SDLK_R)
+                    {
+                        if (event.key.mod & SDL_KMOD_CTRL)
+                            m_TilePalette.RemoveAtlas();
+                    }
+                    else if (event.key.key == SDLK_S)
+                    {
+                        if (event.key.mod & SDL_KMOD_CTRL)
+                            m_MapViewport.SaveTilemap();
                     }
                 } break;
             }
