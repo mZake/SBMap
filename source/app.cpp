@@ -123,7 +123,8 @@ namespace SBMap
     {
         if (!SDL_Init(SDL_INIT_VIDEO))
         {
-            SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to initialize SDL: %s", SDL_GetError());
             return false;
         }
         
@@ -137,14 +138,16 @@ namespace SBMap
         m_Window = SDL_CreateWindow("SBMap", window_width, window_height, window_flags);
         if (!m_Window)
         {
-            SDL_Log("Failed to create a window: %s", SDL_GetError());
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to create a window: %s", SDL_GetError());
             return false;
         }
         
         m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
         if (!m_Renderer)
         {
-            SDL_Log("Failed to create a renderer: %s", SDL_GetError());
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to create a renderer: %s", SDL_GetError());
             return false;
         }
         
@@ -180,7 +183,8 @@ namespace SBMap
         if (IsResultError(tp_result))
         {
             const Error& error = GetResultError(tp_result);
-            SDL_Log("Failed to initialize Tile Palette: %s", error.message);
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to initialize Tile Palette: %s", error.message);
             return false;
         }
         
@@ -188,7 +192,8 @@ namespace SBMap
         if (IsResultError(mv_result))
         {
             const Error& error = GetResultError(mv_result);
-            SDL_Log("Failed to initialize Map Viewport: %s", error.message);
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to initialize Map Viewport: %s", error.message);
             return false;
         }
         
