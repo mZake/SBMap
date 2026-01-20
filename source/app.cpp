@@ -213,16 +213,16 @@ namespace SBMap
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if (ImGui::MenuItem("Open Atlas", "Ctrl+O"))
+                    if (ImGui::MenuItem("Open Atlas...", "Ctrl+O"))
                         m_TilePalette.OpenAtlas();
                     if (ImGui::MenuItem("Remove Atlas", "Ctrl+R"))
                         m_TilePalette.RemoveAtlas();
                     
                     ImGui::Separator();
                     
-                    if (ImGui::MenuItem("Open Tilemap", "Ctrl+Shift+O"))
+                    if (ImGui::MenuItem("Open Tilemap...", "Ctrl+Shift+O"))
                         m_MapViewport.OpenTilemap();
-                    if (ImGui::MenuItem("Save Tilemap", "Ctrl+Shift+S"))
+                    if (ImGui::MenuItem("Save Tilemap...", "Ctrl+Shift+S"))
                         m_MapViewport.SaveTilemap();
                     
                     ImGui::EndMenu();
