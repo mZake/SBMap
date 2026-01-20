@@ -1,5 +1,7 @@
 #include <SDL3/SDL.h>
 
+#include "core.h"
+#include "error.h"
 #include "texture.h"
 #include "tilemap.h"
 
@@ -167,5 +169,34 @@ namespace SBMap
         SDL_assert(tilemap.cells.size() == size_t(tilemap.width * tilemap.height));
         
         return true;
+    }
+    
+    bool IsInTilesetBounds(const Tileset& tileset, int32 tile_x, int32 tile_y)
+    {
+        SDL_assert(IsTilesetValid(tileset));
+        
+        bool result =
+            tile_x >= 0 && tile_x < tileset.width &&
+            tile_y >= 0 && tile_y < tileset.height;
+        
+        return result;
+    }
+    
+    bool IsInTilemapBounds(const Tilemap& tilemap, int32 cell_x, int32 cell_y)
+    {
+        SDL_assert(IsTilemapValid(tilemap));
+        
+        bool result =
+            cell_x >= 0 && cell_x < tilemap.width &&
+            cell_y >= 0 && cell_y < tilemap.height;
+        
+        return result;
+    }
+    
+    MapCell& GetTilemapCell(Tilemap& tilemap, int32 cell_x, int32 cell_y)
+    {
+        SDL_assert(IsInTilemapBounds(tilemap, cell_x, cell_y));
+        size_t cell_index = (size_t)(cell_x + cell_y * tilemap.width);
+        return tilemap.cells[cell_index];
     }
 }

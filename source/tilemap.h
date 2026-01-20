@@ -46,4 +46,9 @@ namespace SBMap
     
     bool IsTilesetValid(const Tileset& tileset);
     bool IsTilemapValid(const Tilemap& tilemap);
+    
+    bool IsInTilesetBounds(const Tileset& tileset, int32 tile_x, int32 tile_y);
+    bool IsInTilemapBounds(const Tilemap& tilemap, int32 cell_x, int32 cell_y);
+    
+    MapCell& GetTilemapCell(Tilemap& tilemap, int32 cell_x, int32 cell_y);
 }
