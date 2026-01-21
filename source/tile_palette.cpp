@@ -27,16 +27,8 @@ namespace SBMap
     
     Result<TilePalette> TilePalette::Create(AppContext& context)
     {
-        auto placeholder_result = LoadTexture("assets/images/placeholder.png", context.GetRenderer());
-        if (IsResultError(placeholder_result))
-        {
-            const Error& error = GetResultError(placeholder_result);
-            return MakeError("Failed to load placeholder texture: %s", error.message);
-        }
-        
         TilePalette instance;
         instance.m_Context = &context;
-        instance.m_Placeholder = GetResultValue(placeholder_result);
         instance.m_Tileset.width = MINIMUM_TILE_WIDTH;
         instance.m_Tileset.height = MINIMUM_TILE_HEIGHT;
         instance.m_Scale = 1.0f;
@@ -173,12 +165,14 @@ namespace SBMap
         }
         else
         {
-            ImVec2 placeholder_size;
-            placeholder_size.x = (float32)m_Placeholder.width;
-            placeholder_size.y = (float32)m_Placeholder.height;
+            const Texture2D& checkerboard = m_Context->GetCheckerboard();
             
-            ImTextureRef placeholder_image_ref = GetTextureImGuiID(m_Placeholder);
-            ImGui::Image(placeholder_image_ref, placeholder_size);
+            ImVec2 image_size;
+            image_size.x = (float32)checkerboard.width;
+            image_size.y = (float32)checkerboard.height;
+            
+            ImTextureRef texture_ref = GetTextureImGuiID(checkerboard);
+            ImGui::Image(texture_ref, image_size);
         }
     }
     

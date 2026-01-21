@@ -2,7 +2,6 @@
 
 #include "core.h"
 #include "error.h"
-#include "texture.h"
 #include "tilemap.h"
 
 namespace SBMap
@@ -33,7 +32,6 @@ namespace SBMap
         
     private:
         AppContext* m_Context = nullptr;
-        Texture2D m_Placeholder;
         Tileset m_Tileset = {};
         int32 m_SelectedTileX = 0;
         int32 m_SelectedTileY = 0;

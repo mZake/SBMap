@@ -363,31 +363,42 @@ namespace SBMap
     {
         ImGui::SeparatorText("Map");
         
-        if (!IsTilemapValid(m_Tilemap))
-            return;
-        
-        const Tileset& tileset = *m_Tilemap.tileset;
-        
-        ImVec2 content_size;
-        content_size.x = (float32)(m_Tilemap.width * tileset.tile_width) * m_Scale + 1;
-        content_size.y = (float32)(m_Tilemap.height * tileset.tile_height) * m_Scale + 1;
-        
-        ImGuiWindowFlags window_flags =
-            ImGuiWindowFlags_HorizontalScrollbar;
-        
-        ImGuiChildFlags child_flags =
-            ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
-        
-        ImGui::BeginChild("MapViewport-Map", ImVec2(480, 270), child_flags, window_flags);
-        
-        RenderTilemap();
-        RenderTilemapOverlay();
-        RenderTileGrid();
-        RenderTileMarker();
-        
-        ImGui::Dummy(content_size);
-        
-        ImGui::EndChild();
+        if (IsTilemapValid(m_Tilemap))
+        {
+            const Tileset& tileset = *m_Tilemap.tileset;
+            
+            ImVec2 content_size;
+            content_size.x = (float32)(m_Tilemap.width * tileset.tile_width) * m_Scale + 1;
+            content_size.y = (float32)(m_Tilemap.height * tileset.tile_height) * m_Scale + 1;
+            
+            ImGuiWindowFlags window_flags =
+                ImGuiWindowFlags_HorizontalScrollbar;
+            
+            ImGuiChildFlags child_flags =
+                ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX | ImGuiChildFlags_ResizeY;
+            
+            ImGui::BeginChild("MapViewport-Map", ImVec2(480, 270), child_flags, window_flags);
+            
+            RenderTilemap();
+            RenderTilemapOverlay();
+            RenderTileGrid();
+            RenderTileMarker();
+            
+            ImGui::Dummy(content_size);
+            
+            ImGui::EndChild();
+        }
+        else
+        {
+            const Texture2D& checkerboard = m_Context->GetCheckerboard();
+            
+            ImVec2 image_size;
+            image_size.x = (float32)checkerboard.width;
+            image_size.y = (float32)checkerboard.height;
+            
+            ImTextureRef texture_ref = GetTextureImGuiID(checkerboard);
+            ImGui::Image(texture_ref, image_size);
+        }
     }
     
     void MapViewport::ShowPropertiesSectionUI()

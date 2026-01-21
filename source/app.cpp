@@ -200,6 +200,17 @@ namespace SBMap
         m_TilePalette = GetResultValue(tp_result);
         m_MapViewport = GetResultValue(mv_result);
         
+        auto cb_result = LoadTexture("assets/images/placeholder.png", m_Renderer);
+        if (IsResultError(cb_result))
+        {
+            const Error& error = GetResultError(cb_result);
+            OpenNativeErrorPopup("SBMap Error"
+                "Failed to load checkerboard texture: %s", error.message);
+            return false;
+        }
+        
+        m_Checkerboard = GetResultValue(cb_result);
+        
         return true;
     }
     
