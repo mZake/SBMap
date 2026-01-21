@@ -95,6 +95,24 @@ namespace SBMap
         return *this;
     }
     
+    Texture2D CreateTexture(SDL_Surface* surface, SDL_Renderer* renderer)
+    {
+        SDL_assert(surface != nullptr);
+        SDL_assert(renderer != nullptr);
+        
+        SDL_Texture* handle = SDL_CreateTextureFromSurface(renderer, surface);
+        if (!handle)
+            return Texture2D();
+        
+        Texture2D texture;
+        texture.handle = handle;
+        texture.count = new size_t(1);
+        texture.width = surface->w;
+        texture.height = surface->h;
+        
+        return texture;
+    }
+    
     Result<Texture2D> LoadTexture(const char* filepath, SDL_Renderer* renderer)
     {
         SDL_assert(filepath != nullptr);
@@ -109,7 +127,6 @@ namespace SBMap
         
         uint8* pixels = nullptr;
         SDL_Surface* surface = nullptr;
-        SDL_Texture* handle = nullptr;
         
         auto cleanup_intermediate = [&](){
             if (surface)
@@ -134,20 +151,14 @@ namespace SBMap
             return MakeError("Could not create a surface from the image.");
         }
         
-        handle = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!handle)
+        Texture2D texture = CreateTexture(surface, renderer);
+        if (!IsTextureValid(texture))
         {
             cleanup_intermediate();
             return MakeError("Could not create a texture from the surface.");
         }
         
         cleanup_intermediate();
-        
-        Texture2D texture;
-        texture.handle = handle;
-        texture.count = new size_t(1);
-        texture.width = width;
-        texture.height = height;
         
         return texture;
     }

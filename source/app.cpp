@@ -102,6 +102,45 @@ namespace SBMap
         style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
     }
     
+    static Texture2D CreateCheckerboardTexture(SDL_Renderer* renderer)
+    {
+        int32 block_count = 4;
+        int32 block_width = 32;
+        int32 texture_width = block_count * block_width;
+        
+        SDL_Surface* surface = SDL_CreateSurface(texture_width, texture_width, SDL_PIXELFORMAT_RGBA32);
+        if (!surface)
+            return Texture2D();
+        
+        const SDL_PixelFormatDetails* format_details = SDL_GetPixelFormatDetails(surface->format);
+        
+        uint32 colors[2];
+        colors[0] = SDL_MapRGB(format_details, nullptr, 224, 224, 224);
+        colors[1] = SDL_MapRGB(format_details, nullptr, 192, 192, 192);
+        
+        for (int32 y = 0; y < block_count; y++)
+        {
+            for (int32 x = 0; x < block_count; x++)
+            {
+                uint32 color = colors[(x + y) & 1];
+                
+                SDL_Rect dest_rect;
+                dest_rect.x = x * block_width;
+                dest_rect.y = y * block_width;
+                dest_rect.w = block_width;
+                dest_rect.h = block_width;
+                
+                SDL_FillSurfaceRect(surface, &dest_rect, color);
+            }
+        }
+        
+        Texture2D texture = CreateTexture(surface, renderer);
+        
+        SDL_DestroySurface(surface);
+        
+        return texture;
+    }
+    
     AppContext::~AppContext()
     {
         if (m_ImGuiInit)
@@ -200,16 +239,13 @@ namespace SBMap
         m_TilePalette = GetResultValue(tp_result);
         m_MapViewport = GetResultValue(mv_result);
         
-        auto cb_result = LoadTexture("assets/images/placeholder.png", m_Renderer);
-        if (IsResultError(cb_result))
+        m_Checkerboard = CreateCheckerboardTexture(m_Renderer);
+        if (!IsTextureValid(m_Checkerboard))
         {
-            const Error& error = GetResultError(cb_result);
-            OpenNativeErrorPopup("SBMap Error"
-                "Failed to load checkerboard texture: %s", error.message);
+            OpenNativeErrorPopup("SBMap Error",
+                "Failed to create checkerboard texture");
             return false;
         }
-        
-        m_Checkerboard = GetResultValue(cb_result);
         
         return true;
     }
