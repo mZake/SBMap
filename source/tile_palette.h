@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core.h"
-#include "error.h"
 #include "tilemap.h"
 
 namespace SBMap
@@ -11,7 +10,7 @@ namespace SBMap
     class TilePalette
     {
     public:
-        static Result<TilePalette> Create(AppContext& context);
+        static TilePalette Create(AppContext& context);
         
         void ShowUI();
         

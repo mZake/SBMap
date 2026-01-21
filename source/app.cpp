@@ -218,26 +218,8 @@ namespace SBMap
         style.ScaleAllSizes(m_DisplayScale);
         style.FontScaleDpi = m_DisplayScale;
         
-        auto tp_result = TilePalette::Create(*this);
-        if (IsResultError(tp_result))
-        {
-            const Error& error = GetResultError(tp_result);
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to initialize Tile Palette: %s", error.message);
-            return false;
-        }
-        
-        auto mv_result = MapViewport::Create(*this);
-        if (IsResultError(mv_result))
-        {
-            const Error& error = GetResultError(mv_result);
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to initialize Map Viewport: %s", error.message);
-            return false;
-        }
-        
-        m_TilePalette = GetResultValue(tp_result);
-        m_MapViewport = GetResultValue(mv_result);
+        m_TilePalette = TilePalette::Create(*this);
+        m_MapViewport = MapViewport::Create(*this);
         
         m_Checkerboard = CreateCheckerboardTexture(m_Renderer);
         if (!IsTextureValid(m_Checkerboard))

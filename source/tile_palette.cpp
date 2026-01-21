@@ -4,7 +4,6 @@
 #include "app.h"
 #include "core.h"
 #include "error_popup.h"
-#include "error.h"
 #include "texture.h"
 #include "tile_palette.h"
 #include "tilemap.h"
@@ -25,7 +24,7 @@ namespace SBMap
         tile_palette->OpenAtlasFile(*filelist);
     }
     
-    Result<TilePalette> TilePalette::Create(AppContext& context)
+    TilePalette TilePalette::Create(AppContext& context)
     {
         TilePalette instance;
         instance.m_Context = &context;

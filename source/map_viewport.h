@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core.h"
-#include "error.h"
 #include "tilemap.h"
 
 namespace SBMap
@@ -19,7 +18,7 @@ namespace SBMap
     class MapViewport
     {
     public:
-        static Result<MapViewport> Create(AppContext& context);
+        static MapViewport Create(AppContext& context);
         
         void ShowUI();
         

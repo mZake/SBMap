@@ -70,7 +70,7 @@ namespace SBMap
             selected = layer;
     }
     
-    Result<MapViewport> MapViewport::Create(AppContext& context)
+    MapViewport MapViewport::Create(AppContext& context)
     {
         MapViewport instance;
         instance.m_Context = &context;
