@@ -213,7 +213,7 @@ namespace SBMap
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         
-        ImFontConfig font_config;
+        ImFontConfig font_config = {};
         font_config.FontDataOwnedByAtlas = false;
         io.FontDefault = io.Fonts->AddFontFromMemoryTTF(InterFontData, InterFontSize, 0.0f, &font_config);
         
