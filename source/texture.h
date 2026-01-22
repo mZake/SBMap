@@ -26,6 +26,6 @@ namespace SBMap
     Texture2D CreateTexture(SDL_Surface* surface, SDL_Renderer* renderer);
     Result<Texture2D> LoadTexture(const char* filepath, SDL_Renderer* renderer);
     
-    bool IsTextureValid(const Texture2D& other);
+    bool IsTextureValid(const Texture2D& texture);
     uint64 GetTextureImGuiID(const Texture2D& texture);
 }
