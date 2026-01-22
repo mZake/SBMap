@@ -1,5 +1,6 @@
 #include "app.h"
 #include "core.h"
+#include "embedded.h"
 #include "error_popup.h"
 #include "map_viewport.h"
 #include "tile_palette.h"
@@ -211,7 +212,10 @@ namespace SBMap
         
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/inter/Inter-Variable.ttf");
+        
+        ImFontConfig font_config;
+        font_config.FontDataOwnedByAtlas = false;
+        io.FontDefault = io.Fonts->AddFontFromMemoryTTF(InterFontData, InterFontSize, 0.0f, &font_config);
         
         SetupImGuiStyle();
         ImGuiStyle& style = ImGui::GetStyle();

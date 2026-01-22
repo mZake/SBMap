@@ -56,3 +56,14 @@ cmake --build build
 ```
 
 After the build finishes, the SBMap executable and its runtime dependencies can be found in the `build` directory.
+
+## Third-party Licenses
+### Inter Font
+This software embeds the **Inter** font.
+
+Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org
+
+A copy of the OFL license is included in this repository. See OFL.txt

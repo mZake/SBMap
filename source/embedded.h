@@ -1,0 +1,10 @@
+#pragma once
+
+// This software embeds the Inter font.
+// 
+// Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+// 
+// This Font Software is licensed under the SIL Open Font License, Version 1.1.
+// This license is available with a FAQ at: https://openfontlicense.org
+extern unsigned char InterFontData[];
+extern int InterFontSize;

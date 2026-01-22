@@ -20,6 +20,8 @@ set(SOURCE_FILES
     source/app.cpp
     source/app.h
     source/core.h
+    source/embedded.cpp
+    source/embedded.h
     source/error_popup.cpp
     source/error_popup.h
     source/error.cpp
