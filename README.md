@@ -28,7 +28,7 @@ Although other platforms and compilers have not been officially tested, the proj
 ## Dependencies
 SBMap depends on the following libraries:
 - External
-	- **SDL3** - Windowing, input and rendering
+	- **SDL3** >= 3.2 - Windowing, input and rendering
 - Vendored
 	- **Dear ImGui** - GUI library
 	- **stb_image** - Image loading

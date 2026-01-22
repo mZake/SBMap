@@ -8,7 +8,7 @@ FetchContent_Declare(
     DOWNLOAD_EXTRACT_TIMESTAMP OFF
     URL                 https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.2.28.zip
     URL_HASH            SHA256=a221b497324a2e6fe0543f55fde00e241f3e3f500e4a75c01d441a117911b89d
-    FIND_PACKAGE_ARGS   3.2.28 QUIET
+    FIND_PACKAGE_ARGS   3.2 QUIET
 )
 
 FetchContent_MakeAvailable(SDL3)
