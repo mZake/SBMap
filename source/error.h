@@ -1,5 +1,6 @@
 #pragma once
 
+#include <new>
 #include <utility>
 
 #include <SDL3/SDL.h>

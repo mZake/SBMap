@@ -50,20 +50,20 @@ namespace SBMap
         
         SDL_PathInfo path_info;
         if (!SDL_GetPathInfo(filepath, &path_info))
-            return MakeError("The selected file was not found.");
+            return Error{ "The selected file was not found." };
         
         if (path_info.type != SDL_PATHTYPE_FILE)
-            return MakeError("The selected item is not a file.");
+            return Error{ "The selected item is not a file." };
         
         size_t file_size;
         char* file_data = (char*)SDL_LoadFile(filepath, &file_size);
         if (!file_data)
-            return MakeError("Could not load the selected file.");
+            return Error{ "Could not load the selected file." };
         
         if (file_size < SBM_MINIMUM_SIZE)
         {
             SDL_free(file_data);
-            return MakeError("The selected file is too small. Minimum size is %d bytes.", SBM_MINIMUM_SIZE);
+            return Error{ "The selected file is too small." };
         }
         
         SBMHeader header;
@@ -71,7 +71,7 @@ namespace SBMap
         if (SDL_memcmp(header.magic, "SBMP", 4) != 0)
         {
             SDL_free(file_data);
-            return MakeError("The selected file format is not supported.");
+            return Error{ "The selected file format is not supported." };
         }
         
         // TODO: Check if header.width and header.height >= 0
@@ -82,7 +82,7 @@ namespace SBMap
         if (expected_cells_size != cells_size)
         {
             SDL_free(file_data);
-            return MakeError("The selected SBM file has inconsistent data.\nThe cell count does not match the map dimensions.");
+            return Error{ "The selected SBM file has inconsistent data.\nThe cell count does not match the map dimensions." };
         }
         
         SBMCell* sbm_cells = (SBMCell*)(file_data + sizeof(SBMHeader));
@@ -141,7 +141,7 @@ namespace SBMap
         SDL_memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
         
         if (!SDL_SaveFile(filepath, buffer.data(), buffer_size))
-            return MakeError("Could not write to the selected file.");
+            return Error{ "Could not write to the selected file." };
         
         return true;
     }

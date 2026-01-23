@@ -63,14 +63,14 @@ namespace SBMap
     void TilePalette::OpenAtlasFile(const char* filepath)
     {
         auto result = LoadTexture(filepath, m_Context->GetRenderer());
-        if (IsResultValue(result))
+        if (result)
         {
-            Texture2D& atlas_texture = GetResultValue(result);
+            Texture2D& atlas_texture = result.GetValue();
             m_Tileset = CreateTileset(atlas_texture, m_InputTileWidth, m_InputTileHeight);
         }
         else
         {
-            const Error& error = GetResultError(result);
+            const Error& error = result.GetError();
             OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
         }
     }

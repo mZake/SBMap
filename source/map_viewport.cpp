@@ -107,16 +107,16 @@ namespace SBMap
     void MapViewport::OpenTilemapFile(const char* filepath)
     {
         auto result = LoadTilemapFromDisk(*m_Tilemap.tileset, filepath);
-        if (IsResultValue(result))
+        if (result)
         {
-            Tilemap& tilemap = GetResultValue(result);
+            Tilemap& tilemap = result.GetValue();
             m_Tilemap = std::move(tilemap);
             m_InputWidth = m_Tilemap.width;
             m_InputHeight = m_Tilemap.height;
         }
         else
         {
-            const Error& error = GetResultError(result);
+            const Error& error = result.GetError();
             OpenErrorPopup("Failed to Open Tilemap", "%s", error.message);
         }
     }
@@ -142,9 +142,9 @@ namespace SBMap
     void MapViewport::SaveTilemapFile(const char* filepath)
     {
         auto result = SaveTilemapToDisk(m_Tilemap, filepath);
-        if (IsResultError(result))
+        if (!result)
         {
-            const Error& error = GetResultError(result);
+            const Error& error = result.GetError();
             OpenErrorPopup("Failed to Save Tilemap", "%s", error.message);
         }
     }

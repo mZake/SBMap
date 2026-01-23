@@ -11,7 +11,7 @@ namespace SBMap
         
         va_list args;
         va_start(args, format);
-        vsnprintf(error.message, sizeof(error.message), format, args);
+        // vsnprintf(error.message, sizeof(error.message), format, args);
         va_end(args);
         
         return error;
