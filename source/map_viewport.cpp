@@ -131,7 +131,7 @@ namespace SBMap
         if (!IsTilemapValid(m_Tilemap))
         {
             OpenErrorPopup("Failed to Save Tilemap",
-                "The current tilemap is incomplete and cannot be saved.");
+                "Current tilemap is incomplete and cannot be saved.");
             return;
         }
         
