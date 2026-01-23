@@ -8,7 +8,8 @@ namespace SBMap
 {
     struct Error
     {
-        char message[512];
+        const char* message = nullptr;
+        const char* details = nullptr;
     };
     
     template<typename TValue, typename TError = Error>
