@@ -163,8 +163,8 @@ namespace SBMap
     {
         if (!SDL_Init(SDL_INIT_VIDEO))
         {
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to initialize SDL: %s", SDL_GetError());
+            OpenNativeErrorPopup("Failed to initialize application.",
+                Error{ "Could not initialize SDL.", SDL_GetError() });
             return false;
         }
         
@@ -178,16 +178,16 @@ namespace SBMap
         m_Window = SDL_CreateWindow("SBMap", window_width, window_height, window_flags);
         if (!m_Window)
         {
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to create a window: %s", SDL_GetError());
+            OpenNativeErrorPopup("Failed to initialize application.",
+                Error{ "Could not create a window.", SDL_GetError() });
             return false;
         }
         
         m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
         if (!m_Renderer)
         {
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to create a renderer: %s", SDL_GetError());
+            OpenNativeErrorPopup("Failed to initialize application.",
+                Error{ "Could not create a renderer.", SDL_GetError() });
             return false;
         }
         
@@ -228,8 +228,8 @@ namespace SBMap
         m_Checkerboard = CreateCheckerboardTexture(m_Renderer);
         if (!IsTextureValid(m_Checkerboard))
         {
-            OpenNativeErrorPopup("SBMap Error",
-                "Failed to create checkerboard texture");
+            OpenNativeErrorPopup("Failed to initialize application.",
+                Error{ "Could not create checkerboard texture." });
             return false;
         }
         

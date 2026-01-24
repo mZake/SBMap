@@ -1,8 +1,6 @@
 #include <imgui.h>
 #include <SDL3/SDL.h>
 
-#include <stdarg.h>
-
 #include "error_popup.h"
 
 namespace SBMap
@@ -86,15 +84,18 @@ namespace SBMap
         }
     }
     
-    void OpenNativeErrorPopup(const char* title, const char* format, ...)
+    void OpenNativeErrorPopup(const char* context, const Error& error)
     {
-        va_list args;
-        va_start(args, format);
-        char message[1024];
-        SDL_vsnprintf(message, sizeof(message), format, args);
-        va_end(args);
+        SDL_assert(context != nullptr);
+        SDL_assert(error.message != nullptr);
         
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr))
+        const char* details = error.details ? error.details : "Not available";
+        
+        char message[1024];
+        SDL_snprintf(message, sizeof(message),
+            "%s\n\n%s\n\nDetails:\n%s", context, error.message, details);
+        
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SBMap", message, nullptr))
             SDL_Log("%s", message);
     }
 }
