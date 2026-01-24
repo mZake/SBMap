@@ -63,7 +63,11 @@ namespace SBMap
             if (s_Details[0])
             {
                 ImGui::Spacing();
-                ImGui::Text("Details: %s", s_Details);    
+                if (ImGui::TreeNode("Details"))
+                {
+                    ImGui::TextUnformatted(s_Details);
+                    ImGui::TreePop();  
+                }
             }
             
             ImGui::PopTextWrapPos();
