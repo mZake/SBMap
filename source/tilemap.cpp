@@ -45,8 +45,10 @@ namespace SBMap
     
     Result<Tilemap> LoadTilemapFromDisk(const Tileset& tileset, const char* filepath)
     {
-        SDL_assert(IsTilesetValid(tileset));
         SDL_assert(filepath != nullptr);
+        
+        if (!IsTilesetValid(tileset))
+            return Error{ "Tileset is invalid." };
         
         SDL_PathInfo path_info;
         if (!SDL_GetPathInfo(filepath, &path_info))
@@ -74,7 +76,12 @@ namespace SBMap
             return Error{ "File has unsupported format." };
         }
         
-        // TODO: Check if header.width and header.height >= 0
+        if (header.width < 1 || header.height < 1)
+        {
+            SDL_free(file_data);
+            return Error{ "File has invalid data and is likely corrupted." };
+        }
+        
         size_t cell_count = (size_t)(header.width * header.height);
         size_t expected_cells_size = cell_count * sizeof(SBMCell);
         size_t cells_size = file_size - sizeof(SBMHeader);
