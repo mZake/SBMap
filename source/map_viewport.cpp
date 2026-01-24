@@ -116,8 +116,7 @@ namespace SBMap
         }
         else
         {
-            const Error& error = result.GetError();
-            OpenErrorPopup("Failed to Open Tilemap", "%s", error.message);
+            OpenErrorPopup("Failed to Open Tilemap", result.GetError());
         }
     }
     
@@ -131,7 +130,7 @@ namespace SBMap
         if (!IsTilemapValid(m_Tilemap))
         {
             OpenErrorPopup("Failed to Save Tilemap",
-                "Current tilemap is incomplete and cannot be saved.");
+                Error{ "Current tilemap is incomplete and cannot be saved." });
             return;
         }
         
@@ -143,10 +142,7 @@ namespace SBMap
     {
         auto result = SaveTilemapToDisk(m_Tilemap, filepath);
         if (!result)
-        {
-            const Error& error = result.GetError();
-            OpenErrorPopup("Failed to Save Tilemap", "%s", error.message);
-        }
+            OpenErrorPopup("Failed to Save Tilemap", result.GetError());
     }
     
     void MapViewport::RenderTilemap()

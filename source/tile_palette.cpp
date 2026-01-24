@@ -70,8 +70,7 @@ namespace SBMap
         }
         else
         {
-            const Error& error = result.GetError();
-            OpenErrorPopup("Failed to Open Atlas", "%s", error.message);
+            OpenErrorPopup("Failed to Open Atlas", result.GetError());
         }
     }
     

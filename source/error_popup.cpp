@@ -9,12 +9,14 @@ namespace SBMap
 {
     static char s_Title[128] = {};
     static char s_Message[512] = {};
+    static char s_Details[512] = {};
     static bool s_ShouldOpen = false;
     
     static void ClearErrorPopup()
     {
         s_Title[0] = '\0';
         s_Message[0] = '\0';
+        s_Details[0] = '\0';
         s_ShouldOpen = false;
     }
     
@@ -23,17 +25,16 @@ namespace SBMap
         return (s_Title[0] != '\0') && (s_Message[0] != '\0');
     }
     
-    void OpenErrorPopup(const char* title, const char* format, ...)
+    void OpenErrorPopup(const char* title, const Error& error)
     {
         SDL_assert(title != nullptr);
-        SDL_assert(format != nullptr);
+        SDL_assert(error.message != nullptr);
         
         SDL_strlcpy(s_Title, title, sizeof(s_Title));
+        SDL_strlcpy(s_Message, error.message, sizeof(s_Message));
         
-        va_list args;
-        va_start(args, format);
-        SDL_vsnprintf(s_Message, sizeof(s_Message), format, args);
-        va_end(args);
+        if (error.details)
+            SDL_strlcpy(s_Details, error.details, sizeof(s_Details));
         
         s_ShouldOpen = true;
     }
@@ -47,16 +48,24 @@ namespace SBMap
             s_ShouldOpen = false;
         }
         
-        if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        ImGui::SetNextWindowSize(ImVec2(480.0f, 0.0f));
+        if (ImGui::BeginPopupModal("Error"))
         {
             ImGui::PushFont(nullptr, 24.0f);
             ImGui::TextUnformatted(s_Title);
             ImGui::PopFont();
             
-            ImGui::Spacing();
-            
             ImGui::PushTextWrapPos(480.0f);
+            
+            ImGui::Spacing();
             ImGui::TextUnformatted(s_Message);
+            
+            if (s_Details[0])
+            {
+                ImGui::Spacing();
+                ImGui::Text("Details: %s", s_Details);    
+            }
+            
             ImGui::PopTextWrapPos();
             
             ImGui::Spacing();
