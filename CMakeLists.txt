@@ -24,7 +24,6 @@ set(SOURCE_FILES
     source/embedded.h
     source/error_popup.cpp
     source/error_popup.h
-    source/error.cpp
     source/error.h
     source/main.cpp
     source/map_viewport.cpp
