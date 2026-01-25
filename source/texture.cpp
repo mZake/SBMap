@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "error.h"
+#include "scope.h"
 #include "texture.h"
 
 namespace SBMap
@@ -125,40 +126,19 @@ namespace SBMap
         if (path_info.type != SDL_PATHTYPE_FILE)
             return Error{ "Path exists but is not a file." };
         
-        uint8* pixels = nullptr;
-        SDL_Surface* surface = nullptr;
-        
-        auto cleanup_intermediate = [&](){
-            if (surface)
-                SDL_DestroySurface(surface);
-            if (pixels)
-                stbi_image_free(pixels);
-        };
-        
         int32 width, height, channels;
-        pixels = stbi_load(filepath, &width, &height, &channels, 4);
+        auto pixels = MakeScope(stbi_load(filepath, &width, &height, &channels, 4), stbi_image_free);
         if (!pixels)
-        {
-            cleanup_intermediate();
             return Error{ "Could not load image.", stbi_failure_reason() };
-        }
         
         SDL_PixelFormat pixel_format = SDL_PIXELFORMAT_RGBA32;
-        surface = SDL_CreateSurfaceFrom(width, height, pixel_format, pixels, width * 4);
+        auto surface = MakeScope(SDL_CreateSurfaceFrom(width, height, pixel_format, pixels.Get(), width * 4), SDL_DestroySurface);
         if (!surface)
-        {
-            cleanup_intermediate();
             return Error{ "Could not process image.", SDL_GetError() };
-        }
         
-        Texture2D texture = CreateTexture(surface, renderer);
+        Texture2D texture = CreateTexture(surface.Get(), renderer);
         if (!IsTextureValid(texture))
-        {
-            cleanup_intermediate();
             return Error{ "Could not process image.", SDL_GetError() };
-        }
-        
-        cleanup_intermediate();
         
         return texture;
     }

@@ -2,6 +2,7 @@
 
 #include "core.h"
 #include "error.h"
+#include "scope.h"
 #include "texture.h"
 #include "tilemap.h"
 
@@ -57,41 +58,29 @@ namespace SBMap
             return Error{ "Path exists but is not a file." };
         
         size_t file_size;
-        char* file_data = (char*)SDL_LoadFile(filepath, &file_size);
+        auto file_data = MakeScope((char*)SDL_LoadFile(filepath, &file_size), SDL_free);
         if (!file_data)
             return Error{ "Could not load file.", SDL_GetError() };
         
         if (file_size < SBM_MINIMUM_SIZE)
-        {
-            SDL_free(file_data);
             return Error{ "File is too small." };
-        }
         
         SBMHeader header;
-        SDL_memcpy(&header, file_data, sizeof(SBMHeader));
+        SDL_memcpy(&header, file_data.Get(), sizeof(SBMHeader));
         if (SDL_memcmp(header.magic, "SBMP", 4) != 0)
-        {
-            SDL_free(file_data);
             return Error{ "File has unsupported format." };
-        }
         
         if (header.width < TILEMAP_MINIMUM_WIDTH || header.height < TILEMAP_MINIMUM_HEIGHT)
-        {
-            SDL_free(file_data);
             return Error{ "File has invalid data and is likely corrupted." };
-        }
         
         size_t sbm_cell_array_count = (size_t)(header.width * header.height);
         size_t sbm_cell_array_size = sbm_cell_array_count * sizeof(SBMCell);
         size_t real_sbm_cell_array_size = file_size - sizeof(SBMHeader);
         
         if (sbm_cell_array_size != real_sbm_cell_array_size)
-        {
-            SDL_free(file_data);
             return Error{ "File has invalid data and is likely corrupted." };
-        }
         
-        SBMCell* sbm_cell_array = (SBMCell*)(file_data + sizeof(SBMHeader));
+        SBMCell* sbm_cell_array = (SBMCell*)(file_data.Get() + sizeof(SBMHeader));
         std::vector<Tilemap::Cell> tilemap_cells(sbm_cell_array_count);
         
         for (size_t i = 0; i < sbm_cell_array_count; i++)
@@ -100,17 +89,12 @@ namespace SBMap
             
             SBMCell& sbm_cell = sbm_cell_array[i];
             if(!IsInTilesetBounds(tileset, sbm_cell.tile_x, sbm_cell.tile_y))
-            {
-                SDL_free(file_data);
                 return Error{ "Tile out of tileset bounds." };
-            }
             
             tilemap_cell.tile_x = sbm_cell.tile_x;
             tilemap_cell.tile_y = sbm_cell.tile_y;
             tilemap_cell.flags = sbm_cell.flags;
         }
-        
-        SDL_free(file_data);
         
         Tilemap tilemap;
         tilemap.tileset = tileset;

@@ -28,6 +28,7 @@ set(SOURCE_FILES
     source/main.cpp
     source/map_viewport.cpp
     source/map_viewport.h
+    source/scope.h
     source/texture.cpp
     source/texture.h
     source/tile_palette.cpp
