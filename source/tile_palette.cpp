@@ -10,9 +10,6 @@
 
 namespace SBMap
 {
-    constexpr int32 MINIMUM_TILE_WIDTH = 4;
-    constexpr int32 MINIMUM_TILE_HEIGHT = 4;
-    
     static void OpenFileDialogCallback(void* userdata, const char* const* filelist, int filter)
     {
         (void)filter;
@@ -28,11 +25,11 @@ namespace SBMap
     {
         TilePalette instance;
         instance.m_Context = &context;
-        instance.m_Tileset.width = MINIMUM_TILE_WIDTH;
-        instance.m_Tileset.height = MINIMUM_TILE_HEIGHT;
+        instance.m_Tileset.width = TILE_MINIMUM_WIDTH;
+        instance.m_Tileset.height = TILE_MINIMUM_HEIGHT;
         instance.m_Scale = 1.0f;
-        instance.m_InputTileWidth = MINIMUM_TILE_WIDTH;
-        instance.m_InputTileHeight = MINIMUM_TILE_HEIGHT;
+        instance.m_InputTileWidth = TILE_MINIMUM_WIDTH;
+        instance.m_InputTileHeight = TILE_MINIMUM_HEIGHT;
         
         return instance;
     }
@@ -83,13 +80,13 @@ namespace SBMap
     {
         if (m_InputTileWidth > m_Tileset.atlas.width)
             m_InputTileWidth = m_Tileset.atlas.width;
-        if (m_InputTileWidth < MINIMUM_TILE_WIDTH)
-            m_InputTileWidth = MINIMUM_TILE_WIDTH;
+        if (m_InputTileWidth < TILE_MINIMUM_WIDTH)
+            m_InputTileWidth = TILE_MINIMUM_WIDTH;
         
         if (m_InputTileHeight > m_Tileset.atlas.height)
             m_InputTileHeight = m_Tileset.atlas.height;
-        if (m_InputTileHeight < MINIMUM_TILE_HEIGHT)
-            m_InputTileHeight = MINIMUM_TILE_HEIGHT;
+        if (m_InputTileHeight < TILE_MINIMUM_HEIGHT)
+            m_InputTileHeight = TILE_MINIMUM_HEIGHT;
         
         m_Tileset.tile_width = m_InputTileWidth;
         m_Tileset.tile_height = m_InputTileHeight;
@@ -102,8 +99,8 @@ namespace SBMap
     
     void TilePalette::ResetTileSize()
     {
-        m_InputTileWidth = MINIMUM_TILE_WIDTH;
-        m_InputTileHeight = MINIMUM_TILE_HEIGHT;
+        m_InputTileWidth = TILE_MINIMUM_WIDTH;
+        m_InputTileHeight = TILE_MINIMUM_HEIGHT;
         SetTileSize();
     }
     

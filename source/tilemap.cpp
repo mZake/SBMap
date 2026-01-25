@@ -11,34 +11,34 @@ namespace SBMap
     
     struct SBMHeader
     {
-        uint8 magic[4];
-        int32 width;
-        int32 height;
+        uint8 magic[4] = {};
+        int32 width = 0;
+        int32 height = 0;
     };
     
     struct SBMCell
     {
-        int32 tile_x;
-        int32 tile_y;
-        uint32 flags;
+        int32 tile_x = -1;
+        int32 tile_y = -1;
+        uint32 flags = 0;
     };
     
     #pragma pack(pop)
     
     constexpr size_t SBM_MINIMUM_SIZE = sizeof(SBMHeader) + sizeof(SBMCell);
     
-    Tileset CreateTileset(Texture2D& atlas, int32 tile_width, int32 tile_height)
+    Tileset CreateTileset(const Texture2D& atlas_texture, int32 tile_width, int32 tile_height)
     {
-        SDL_assert(IsTextureValid(atlas));
-        SDL_assert(tile_width > 0);
-        SDL_assert(tile_height > 0);
+        SDL_assert(IsTextureValid(atlas_texture));
+        SDL_assert(tile_width >= TILE_MINIMUM_WIDTH);
+        SDL_assert(tile_height >= TILE_MINIMUM_HEIGHT);
         
         Tileset tileset;
-        tileset.atlas = atlas;
+        tileset.atlas = atlas_texture;
         tileset.tile_width = tile_width;
         tileset.tile_height = tile_height;
-        tileset.width = atlas.width / tile_width;
-        tileset.height = atlas.height / tile_height;
+        tileset.width = atlas_texture.width / tile_width;
+        tileset.height = atlas_texture.height / tile_height;
         
         return tileset;
     }
@@ -53,7 +53,6 @@ namespace SBMap
         SDL_PathInfo path_info;
         if (!SDL_GetPathInfo(filepath, &path_info))
             return Error{ "Path does not exist." };
-        
         if (path_info.type != SDL_PATHTYPE_FILE)
             return Error{ "Path exists but is not a file." };
         
@@ -76,40 +75,46 @@ namespace SBMap
             return Error{ "File has unsupported format." };
         }
         
-        if (header.width < 1 || header.height < 1)
+        if (header.width < TILEMAP_MINIMUM_WIDTH || header.height < TILEMAP_MINIMUM_HEIGHT)
         {
             SDL_free(file_data);
             return Error{ "File has invalid data and is likely corrupted." };
         }
         
-        size_t cell_count = (size_t)(header.width * header.height);
-        size_t expected_cells_size = cell_count * sizeof(SBMCell);
-        size_t cells_size = file_size - sizeof(SBMHeader);
+        size_t sbm_cell_array_count = (size_t)(header.width * header.height);
+        size_t sbm_cell_array_size = sbm_cell_array_count * sizeof(SBMCell);
+        size_t real_sbm_cell_array_size = file_size - sizeof(SBMHeader);
         
-        if (expected_cells_size != cells_size)
+        if (sbm_cell_array_size != real_sbm_cell_array_size)
         {
             SDL_free(file_data);
             return Error{ "File has invalid data and is likely corrupted." };
         }
         
-        SBMCell* sbm_cells = (SBMCell*)(file_data + sizeof(SBMHeader));
-        std::vector<MapCell> map_cells(cell_count);
+        SBMCell* sbm_cell_array = (SBMCell*)(file_data + sizeof(SBMHeader));
+        std::vector<Tilemap::Cell> tilemap_cells(sbm_cell_array_count);
         
-        for (size_t i = 0; i < cell_count; i++)
+        for (size_t i = 0; i < sbm_cell_array_count; i++)
         {
-            MapCell& map_cell = map_cells[i];
-            SBMCell& sbm_cell = sbm_cells[i];
+            Tilemap::Cell& tilemap_cell = tilemap_cells[i];
             
-            map_cell.tile_x = sbm_cell.tile_x;
-            map_cell.tile_y = sbm_cell.tile_y;
-            map_cell.flags = sbm_cell.flags;
+            SBMCell& sbm_cell = sbm_cell_array[i];
+            if(!IsInTilesetBounds(tileset, sbm_cell.tile_x, sbm_cell.tile_y))
+            {
+                SDL_free(file_data);
+                return Error{ "Tile out of tileset bounds." };
+            }
+            
+            tilemap_cell.tile_x = sbm_cell.tile_x;
+            tilemap_cell.tile_y = sbm_cell.tile_y;
+            tilemap_cell.flags = sbm_cell.flags;
         }
         
         SDL_free(file_data);
         
         Tilemap tilemap;
-        tilemap.tileset = &tileset;
-        tilemap.cells = std::move(map_cells);
+        tilemap.tileset = tileset;
+        tilemap.cells = std::move(tilemap_cells);
         tilemap.width = header.width;
         tilemap.height = header.height;
         
@@ -118,34 +123,34 @@ namespace SBMap
     
     Result<bool> SaveTilemapToDisk(const Tilemap& tilemap, const char* filepath)
     {
-        SDL_assert(IsTilemapValid(tilemap));
         SDL_assert(filepath != nullptr);
         
-        size_t header_size = sizeof(SBMHeader);
-        size_t cell_count = tilemap.cells.size();
-        size_t cells_size = sizeof(SBMCell) * cell_count;
-        size_t buffer_size = header_size + cells_size;
+        if (!IsTilemapValid(tilemap))
+            return Error{ "Tilemap is incomplete and cannot be saved." };
         
-        std::vector<uint8> buffer(buffer_size);
+        size_t sbm_cell_array_count = tilemap.cells.size();
+        size_t sbm_cell_array_size = sbm_cell_array_count * sizeof(SBMCell);
+        
+        size_t buffer_size = sizeof(SBMHeader) + sbm_cell_array_size;
+        std::vector<char> buffer(buffer_size);
         
         SBMHeader header;
         SDL_memcpy(header.magic, "SBMP", 4);
         header.width = tilemap.width;
         header.height = tilemap.height;
         
-        std::vector<SBMCell> sbm_cells(cell_count);
-        for (size_t i = 0; i < cell_count; i++)
-        {
-            const MapCell& map_cell = tilemap.cells[i];
-            SBMCell& sbm_cell = sbm_cells[i];
-            
-            sbm_cell.tile_x = map_cell.tile_x;
-            sbm_cell.tile_y = map_cell.tile_y;
-            sbm_cell.flags = map_cell.flags;
-        }
+        SDL_memcpy(buffer.data(), &header, sizeof(SBMHeader));
         
-        SDL_memcpy(buffer.data(), &header, header_size);
-        SDL_memcpy(buffer.data() + header_size, sbm_cells.data(), cells_size);
+        SBMCell* sbm_cell_array = (SBMCell*)(buffer.data() + sizeof(SBMHeader));
+        for (size_t i = 0; i < sbm_cell_array_count; i++)
+        {
+            const Tilemap::Cell& tilemap_cell = tilemap.cells[i];
+            SBMCell& sbm_cell = sbm_cell_array[i];
+            
+            sbm_cell.tile_x = tilemap_cell.tile_x;
+            sbm_cell.tile_y = tilemap_cell.tile_y;
+            sbm_cell.flags = tilemap_cell.flags;
+        }
         
         if (!SDL_SaveFile(filepath, buffer.data(), buffer_size))
             return Error{ "Could not write to file.", SDL_GetError() };
@@ -158,22 +163,22 @@ namespace SBMap
         if (!IsTextureValid(tileset.atlas))
             return false;
         
-        SDL_assert(tileset.tile_width > 0);
-        SDL_assert(tileset.tile_height > 0);
-        SDL_assert(tileset.width > 0);
-        SDL_assert(tileset.height > 0);
+        SDL_assert(tileset.tile_width >= TILE_MINIMUM_WIDTH);
+        SDL_assert(tileset.tile_height >= TILE_MINIMUM_HEIGHT);
+        SDL_assert(tileset.width >= TILESET_MINIMUM_WIDTH);
+        SDL_assert(tileset.height >= TILESET_MINIMUM_HEIGHT);
         
         return true;
     }
     
     bool IsTilemapValid(const Tilemap& tilemap)
     {
-        if (!(tilemap.tileset && IsTilesetValid(*tilemap.tileset)))
+        if (!IsTilesetValid(tilemap.tileset))
             return false;
         
-        SDL_assert(tilemap.width > 0);
-        SDL_assert(tilemap.height > 0);
-        SDL_assert(tilemap.cells.size() == size_t(tilemap.width * tilemap.height));
+        SDL_assert(tilemap.width >= TILEMAP_MINIMUM_WIDTH);
+        SDL_assert(tilemap.height >= TILEMAP_MINIMUM_HEIGHT);
+        SDL_assert(tilemap.cells.size() == (size_t)(tilemap.width * tilemap.height));
         
         return true;
     }
@@ -200,7 +205,7 @@ namespace SBMap
         return result;
     }
     
-    MapCell& GetTilemapCell(Tilemap& tilemap, int32 cell_x, int32 cell_y)
+    Tilemap::Cell& GetTilemapCell(Tilemap& tilemap, int32 cell_x, int32 cell_y)
     {
         SDL_assert(IsInTilemapBounds(tilemap, cell_x, cell_y));
         size_t cell_index = (size_t)(cell_x + cell_y * tilemap.width);
