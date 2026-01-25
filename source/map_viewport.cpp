@@ -325,17 +325,14 @@ namespace SBMap
     
     void MapViewport::SetTilemapSize()
     {
-        if (m_InputWidth < TILEMAP_MINIMUM_WIDTH)
-            m_InputWidth = TILEMAP_MINIMUM_WIDTH;
-        
-        if (m_InputHeight < TILEMAP_MINIMUM_HEIGHT)
-            m_InputHeight = TILEMAP_MINIMUM_HEIGHT;
+        m_InputWidth = SDL_clamp(m_InputWidth, TILEMAP_MINIMUM_WIDTH, TILEMAP_MAXIMUM_WIDTH);
+        m_InputHeight = SDL_clamp(m_InputHeight, TILEMAP_MINIMUM_HEIGHT, TILEMAP_MAXIMUM_HEIGHT);
         
         m_Tilemap.width = m_InputWidth;
         m_Tilemap.height = m_InputHeight;
         
         size_t cell_count = (size_t)(m_Tilemap.width * m_Tilemap.height);
-        m_Tilemap.cells.resize(cell_count, { -1, -1, 0 });
+        m_Tilemap.cells.resize(cell_count);
     }
     
     void MapViewport::ResetTilemapSize()

@@ -32,14 +32,24 @@ namespace SBMap
     {
         SDL_assert(IsTextureValid(atlas_texture));
         SDL_assert(tile_width >= TILE_MINIMUM_WIDTH);
+        SDL_assert(tile_width <= TILE_MAXIMUM_WIDTH);
         SDL_assert(tile_height >= TILE_MINIMUM_HEIGHT);
+        SDL_assert(tile_height <= TILE_MAXIMUM_HEIGHT);
+        
+        int32 tileset_width = atlas_texture.width / tile_width;
+        int32 tileset_height = atlas_texture.height / tile_height;
+        
+        SDL_assert(tileset_width >= TILESET_MINIMUM_WIDTH);
+        SDL_assert(tileset_width <= TILESET_MAXIMUM_WIDTH);
+        SDL_assert(tileset_height >= TILESET_MINIMUM_HEIGHT);
+        SDL_assert(tileset_height <= TILESET_MAXIMUM_HEIGHT);
         
         Tileset tileset;
         tileset.atlas = atlas_texture;
         tileset.tile_width = tile_width;
         tileset.tile_height = tile_height;
-        tileset.width = atlas_texture.width / tile_width;
-        tileset.height = atlas_texture.height / tile_height;
+        tileset.width = tileset_width;
+        tileset.height = tileset_height;
         
         return tileset;
     }
@@ -71,7 +81,9 @@ namespace SBMap
             return Error{ "File has unsupported format." };
         
         if (header.width < TILEMAP_MINIMUM_WIDTH || header.height < TILEMAP_MINIMUM_HEIGHT)
-            return Error{ "File has invalid data and is likely corrupted." };
+            return Error{ "Tilemap dimensions are smaller than the minimum allowed." };
+        if (header.width > TILEMAP_MAXIMUM_WIDTH || header.height > TILEMAP_MAXIMUM_HEIGHT)
+            return Error{ "Tilemap dimensions are greater than the maximum allowed." };
         
         size_t sbm_cell_array_count = (size_t)(header.width * header.height);
         size_t sbm_cell_array_size = sbm_cell_array_count * sizeof(SBMCell);
@@ -148,9 +160,14 @@ namespace SBMap
             return false;
         
         SDL_assert(tileset.tile_width >= TILE_MINIMUM_WIDTH);
+        SDL_assert(tileset.tile_width <= TILE_MAXIMUM_WIDTH);
         SDL_assert(tileset.tile_height >= TILE_MINIMUM_HEIGHT);
+        SDL_assert(tileset.tile_height <= TILE_MAXIMUM_HEIGHT);
+        
         SDL_assert(tileset.width >= TILESET_MINIMUM_WIDTH);
+        SDL_assert(tileset.width <= TILESET_MAXIMUM_WIDTH);
         SDL_assert(tileset.height >= TILESET_MINIMUM_HEIGHT);
+        SDL_assert(tileset.height <= TILESET_MAXIMUM_HEIGHT);
         
         return true;
     }
@@ -161,7 +178,9 @@ namespace SBMap
             return false;
         
         SDL_assert(tilemap.width >= TILEMAP_MINIMUM_WIDTH);
+        SDL_assert(tilemap.width <= TILEMAP_MAXIMUM_WIDTH);
         SDL_assert(tilemap.height >= TILEMAP_MINIMUM_HEIGHT);
+        SDL_assert(tilemap.height <= TILEMAP_MAXIMUM_HEIGHT);
         SDL_assert(tilemap.cells.size() == (size_t)(tilemap.width * tilemap.height));
         
         return true;

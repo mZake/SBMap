@@ -10,10 +10,18 @@ namespace SBMap
 {
     constexpr int32 TILE_MINIMUM_WIDTH = 4;
     constexpr int32 TILE_MINIMUM_HEIGHT = 4;
+    constexpr int32 TILE_MAXIMUM_WIDTH = 128;
+    constexpr int32 TILE_MAXIMUM_HEIGHT = 128;
+    
     constexpr int32 TILESET_MINIMUM_WIDTH = 1;
     constexpr int32 TILESET_MINIMUM_HEIGHT = 1;
+    constexpr int32 TILESET_MAXIMUM_WIDTH = 1024;
+    constexpr int32 TILESET_MAXIMUM_HEIGHT = 1024;
+    
     constexpr int32 TILEMAP_MINIMUM_WIDTH = 1;
     constexpr int32 TILEMAP_MINIMUM_HEIGHT = 1;
+    constexpr int32 TILEMAP_MAXIMUM_WIDTH = 1024;
+    constexpr int32 TILEMAP_MAXIMUM_HEIGHT = 1024;
     
     struct Tileset
     {
