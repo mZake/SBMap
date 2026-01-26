@@ -2,7 +2,9 @@
 #include "core.h"
 #include "embedded.h"
 #include "error_popup.h"
+#include "error.h"
 #include "map_viewport.h"
+#include "scope.h"
 #include "tile_palette.h"
 
 #include <imgui.h>
@@ -103,15 +105,16 @@ namespace SBMap
         style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
     }
     
-    static Texture2D CreateCheckerboardTexture(SDL_Renderer* renderer)
+    static Result<Texture2D> CreateCheckerboardTexture(SDL_Renderer* renderer)
     {
         int32 block_count = 4;
         int32 block_width = 32;
         int32 texture_width = block_count * block_width;
         
-        SDL_Surface* surface = SDL_CreateSurface(texture_width, texture_width, SDL_PIXELFORMAT_RGBA32);
+        SDL_PixelFormat pixel_format = SDL_PIXELFORMAT_RGBA32;
+        auto surface = MakeScope(SDL_CreateSurface(texture_width, texture_width, pixel_format), SDL_DestroySurface);
         if (!surface)
-            return Texture2D();
+            return Error{ "Could not create image.", SDL_GetError() };
         
         const SDL_PixelFormatDetails* format_details = SDL_GetPixelFormatDetails(surface->format);
         
@@ -131,15 +134,11 @@ namespace SBMap
                 dest_rect.w = block_width;
                 dest_rect.h = block_width;
                 
-                SDL_FillSurfaceRect(surface, &dest_rect, color);
+                SDL_FillSurfaceRect(surface.Get(), &dest_rect, color);
             }
         }
         
-        Texture2D texture = CreateTexture(surface, renderer);
-        
-        SDL_DestroySurface(surface);
-        
-        return texture;
+        return CreateTexture(surface.Get(), renderer);
     }
     
     AppContext::~AppContext()
@@ -225,11 +224,10 @@ namespace SBMap
         m_TilePalette = TilePalette::Create(*this);
         m_MapViewport = MapViewport::Create(*this);
         
-        m_Checkerboard = CreateCheckerboardTexture(m_Renderer);
-        if (!IsTextureValid(m_Checkerboard))
+        auto result = CreateCheckerboardTexture(m_Renderer);
+        if (!result)
         {
-            OpenNativeErrorPopup("Failed to initialize application.",
-                Error{ "Could not create checkerboard texture." });
+            OpenNativeErrorPopup("Failed to create checkerboard texture.", result.GetError());
             return false;
         }
         

@@ -96,14 +96,19 @@ namespace SBMap
         return *this;
     }
     
-    Texture2D CreateTexture(SDL_Surface* surface, SDL_Renderer* renderer)
+    Result<Texture2D> CreateTexture(SDL_Surface* surface, SDL_Renderer* renderer)
     {
         SDL_assert(surface != nullptr);
         SDL_assert(renderer != nullptr);
         
+        if (surface->w < TEXTURE_MINIMUM_WIDTH || surface->h < TEXTURE_MINIMUM_HEIGHT)
+            return Error{ "Image dimensions are smaller than the minimum allowed." };
+        if (surface->w > TEXTURE_MAXIMUM_WIDTH || surface->h > TEXTURE_MAXIMUM_HEIGHT)
+            return Error{ "Image dimensions are greater than the maximum allowed." };
+        
         SDL_Texture* handle = SDL_CreateTextureFromSurface(renderer, surface);
         if (!handle)
-            return Texture2D();
+            return Error{ "Could not process image.", SDL_GetError() };
         
         Texture2D texture;
         texture.handle = handle;
@@ -136,11 +141,7 @@ namespace SBMap
         if (!surface)
             return Error{ "Could not process image.", SDL_GetError() };
         
-        Texture2D texture = CreateTexture(surface.Get(), renderer);
-        if (!IsTextureValid(texture))
-            return Error{ "Could not process image.", SDL_GetError() };
-        
-        return texture;
+        return CreateTexture(surface.Get(), renderer);
     }
     
     bool IsTextureValid(const Texture2D& texture)
