@@ -231,6 +231,8 @@ namespace SBMap
             return false;
         }
         
+        m_Checkerboard = result.GetValue();
+        
         return true;
     }
     
