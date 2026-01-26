@@ -2,6 +2,9 @@
 SBMap is a simple 2D tilemap editor, originally created as an internal tool for the Squareball project.
 The current implementation is tailored to Squareball's needs, with some systems being intentionally specialized rather than generic.
 
+---
+![SBMap Demo](assets/demo.gif)
+
 ## Project Scope
 SBMap focuses on simplicity and easy integration with Squareball over flexibility.
 
