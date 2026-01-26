@@ -110,6 +110,8 @@ namespace SBMap
         if (!handle)
             return Error{ "Could not process image.", SDL_GetError() };
         
+        SDL_SetTextureScaleMode(handle, SDL_SCALEMODE_NEAREST);
+        
         Texture2D texture;
         texture.handle = handle;
         texture.count = new size_t(1);
