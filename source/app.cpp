@@ -1,4 +1,5 @@
 #include "app.h"
+#include "config.h"
 #include "core.h"
 #include "embedded.h"
 #include "error_popup.h"
@@ -195,8 +196,8 @@ namespace SBMap
         
         SDL_SetRenderVSync(m_Renderer, 1);
         
-        // TODO: Set SDL_PROP_APP_METADATA_VERSION_STRING
         SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "SBMap");
+        SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SBMAP_VERSION);
         SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, "com.mzake.sbmap");
         SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Zake");
         SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Copyright (c) 2026 Zake");

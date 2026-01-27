@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(SBMap LANGUAGES CXX)
+project(SBMap LANGUAGES CXX VERSION 0.1.0)
 
 include(FetchContent)
 
@@ -15,6 +15,12 @@ FetchContent_MakeAvailable(SDL3)
 
 add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
+
+configure_file(
+    "${CMAKE_SOURCE_DIR}/cmake/config.h.in"
+    "${CMAKE_SOURCE_DIR}/source/config.h"
+    @ONLY
+)
 
 set(SOURCE_FILES
     source/app.cpp

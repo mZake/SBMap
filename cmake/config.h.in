@@ -1,0 +1,3 @@
+#pragma once
+
+#define SBMAP_VERSION "@SBMap_VERSION@"
