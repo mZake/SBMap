@@ -25,6 +25,7 @@ configure_file(
 set(SOURCE_FILES
     source/app.cpp
     source/app.h
+    source/config.h
     source/core.h
     source/embedded.cpp
     source/embedded.h
