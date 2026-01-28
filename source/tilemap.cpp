@@ -190,22 +190,20 @@ namespace SBMap
     {
         SDL_assert(IsTilesetValid(tileset));
         
-        bool result =
-            tile_x >= 0 && tile_x < tileset.width &&
-            tile_y >= 0 && tile_y < tileset.height;
+        if (tile_x < 0 || tile_y < 0)
+            return false;
         
-        return result;
+        return tile_x < tileset.width && tile_y < tileset.height;
     }
     
     bool IsInTilemapBounds(const Tilemap& tilemap, int32 cell_x, int32 cell_y)
     {
         SDL_assert(IsTilemapValid(tilemap));
         
-        bool result =
-            cell_x >= 0 && cell_x < tilemap.width &&
-            cell_y >= 0 && cell_y < tilemap.height;
+        if (cell_x < 0 || cell_y < 0)
+            return false;
         
-        return result;
+        return cell_x < tilemap.width && cell_y < tilemap.height;
     }
     
     Tilemap::Cell& GetTilemapCell(Tilemap& tilemap, int32 cell_x, int32 cell_y)
