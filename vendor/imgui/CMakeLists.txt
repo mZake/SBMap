@@ -17,7 +17,7 @@ set(SOURCE_FILES
     imstb_textedit.h
     imstb_truetype.h)
 
-add_library(ImGui ${SOURCE_FILES})
+add_library(ImGui STATIC ${SOURCE_FILES})
 add_library(ImGui::ImGui ALIAS ImGui)
 
 target_include_directories(ImGui PUBLIC
