@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=SBMap
+Comment=Simple 2D tilemap editor
+Exec=SBMap
+Icon=sbmap
+Terminal=false
+Categories=Development;Graphics;
