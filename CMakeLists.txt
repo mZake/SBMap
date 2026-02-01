@@ -3,15 +3,17 @@ project(SBMap LANGUAGES CXX VERSION 0.1.0)
 
 include(FetchContent)
 
-FetchContent_Declare(
-    SDL3
-    DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    URL                 https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.2.28.zip
-    URL_HASH            SHA256=a221b497324a2e6fe0543f55fde00e241f3e3f500e4a75c01d441a117911b89d
-    FIND_PACKAGE_ARGS   3.2 QUIET
-)
-
-FetchContent_MakeAvailable(SDL3)
+find_package(SDL3 3.2 CONFIG QUIET)
+if(NOT TARGET SDL3::SDL3)
+    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    
+    FetchContent_Declare(SDL3 
+        DOWNLOAD_EXTRACT_TIMESTAMP OFF
+        URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.2.28.zip
+        URL_HASH SHA256=a221b497324a2e6fe0543f55fde00e241f3e3f500e4a75c01d441a117911b89d)
+    FetchContent_MakeAvailable(SDL3)
+endif()
 
 add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
@@ -61,13 +63,3 @@ if (MINGW)
 endif()
 
 target_link_libraries(SBMap PRIVATE ImGui::ImGui SDL3::SDL3 stb_image::stb_image)
-
-get_target_property(SDL_TYPE SDL3::SDL3 TYPE)
-if (WIN32 AND SDL_TYPE STREQUAL "SHARED_LIBRARY")
-    add_custom_command(
-        TARGET SBMap
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_if_different "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:SBMap>"
-    )
-endif()
