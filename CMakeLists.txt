@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(SBMap LANGUAGES CXX VERSION 0.1.0)
 
 include(FetchContent)
+include(GNUInstallDirs)
 
 find_package(SDL3 3.2 CONFIG QUIET)
 if(NOT TARGET SDL3::SDL3)
@@ -63,3 +64,5 @@ if (MINGW)
 endif()
 
 target_link_libraries(SBMap PRIVATE ImGui::ImGui SDL3::SDL3 stb_image::stb_image)
+
+install(TARGETS SBMap DESTINATION "${CMAKE_INSTALL_BINDIR}")
