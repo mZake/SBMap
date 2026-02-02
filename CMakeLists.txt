@@ -55,13 +55,13 @@ set_target_properties(SBMap PROPERTIES
     CXX_EXTENSIONS OFF)
 
 if(MSVC)
-    set_target_properties(SBMap PROPERTIES MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
+    target_compile_options(SBMap PRIVATE /W4)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(SBMap PRIVATE -Wall -Wconversion -Wextra -Wpedantic)
 endif()
 
 if(MSVC)
-    target_link_options(SBMap PRIVATE /MT)
+    set_target_properties(SBMap PROPERTIES MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
 elseif(MINGW)
     target_link_options(SBMap PRIVATE -static-libgcc -static-libstdc++)
 endif()
