@@ -60,9 +60,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(SBMap PRIVATE -Wall -Wconversion -Wextra -Wpedantic)
 endif()
 
-if(MSVC)
-    set_target_properties(SBMap PROPERTIES MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
-elseif(MINGW)
+if(MINGW)
     target_link_options(SBMap PRIVATE -static-libgcc -static-libstdc++)
 endif()
 
