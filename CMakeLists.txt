@@ -47,7 +47,7 @@ set(SOURCE_FILES
     source/tilemap.cpp
     source/tilemap.h)
 
-add_executable(SBMap ${SOURCE_FILES})
+add_executable(SBMap WIN32 ${SOURCE_FILES})
 
 set_target_properties(SBMap PROPERTIES
     CXX_STANDARD 20
