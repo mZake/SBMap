@@ -26,6 +26,7 @@ configure_file(
 )
 
 set(SOURCE_FILES
+    assets/sbmap.rc
     source/app.cpp
     source/app.h
     source/config.h
