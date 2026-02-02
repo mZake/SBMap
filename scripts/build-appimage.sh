@@ -21,13 +21,19 @@ cmake --build "$BUILD" --config Release
 cmake --install "$BUILD" --config Release --prefix "$APPDIR"
 
 # Setup AppDir
+"$LINUXDEPLOY" --appdir "$APPDIR"
+
 cp "$ROOT/assets/AppRun" "$APPDIR"
 chmod +x "$APPDIR/AppRun"
 
 cp "$ROOT/assets/sbmap.desktop" "$APPDIR"
-cp "$ROOT/assets/sbmap.png" "$APPDIR"
 
-mkdir -p "$APPDIR/usr/bin"
+cp "$ROOT/assets/icon-32x32.png" "$APPDIR/usr/share/icons/hicolor/32x32/apps/sbmap.png"
+cp "$ROOT/assets/icon-64x64.png" "$APPDIR/usr/share/icons/hicolor/64x64/apps/sbmap.png"
+cp "$ROOT/assets/icon-128x128.png" "$APPDIR/usr/share/icons/hicolor/128x128/apps/sbmap.png"
+cp "$ROOT/assets/icon-256x256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/sbmap.png"
+cp "$ROOT/assets/icon-256x256.png" "$APPDIR/sbmap.png"
+
 cp "$APPDIR/bin/SBMap" "$APPDIR/usr/bin"
 
 # Create AppImage
