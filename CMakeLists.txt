@@ -60,7 +60,9 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(SBMap PRIVATE -Wall -Wconversion -Wextra -Wpedantic)
 endif()
 
-if (MINGW)
+if(MSVC)
+    target_link_options(SBMap PRIVATE /MT)
+elseif(MINGW)
     target_link_options(SBMap PRIVATE -static-libgcc -static-libstdc++)
 endif()
 
