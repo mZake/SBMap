@@ -25,8 +25,8 @@ As a result:
 - Keyboard shortcuts for menu options
 
 ## Supported Platforms
-SBMap is primarily developed for Linux and Windows using GCC and Clang compilers.
-Although other platforms and compilers have not been officially tested, the project is designed with portability in mind.
+SBMap is primarily developed for x86-64 Linux and Windows using GCC, Clang, or MSVC.
+Although other platforms have not been officially tested, the project is designed with portability in mind.
 
 ## Dependencies
 SBMap depends on the following libraries:
@@ -44,7 +44,6 @@ Vendored dependencies are included in the `vendor` directory and are compiled to
 - CMake 3.15 or newer
 - A CMake-supported build system (Make, Ninja, MSBuild, etc.)
 - A C++20-compatible compiler
-- Git
 
 Clone the repository:
 ```sh
@@ -52,13 +51,17 @@ git clone https://github.com/mZake/SBMap.git
 cd SBMap
 ```
 
-Build using CMake:
+Automated build scripts are provided in the `scripts` directory:
+- `build.sh` for UNIX-like systems
+- `build.bat` for Windows
+
+To build manually, run the following commands from the project root:
 ```sh
 cmake -S . -B build
 cmake --build build
 ```
 
-After the build finishes, the SBMap executable and its runtime dependencies can be found in the `build` directory.
+After building, the SBMap executable can be found in the `build` directory.
 
 ## Third-party Licenses
 ### Inter Font
