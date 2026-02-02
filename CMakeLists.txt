@@ -4,6 +4,8 @@ project(SBMap LANGUAGES CXX VERSION 0.1.0)
 include(FetchContent)
 include(GNUInstallDirs)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
+
 find_package(SDL3 3.2 CONFIG QUIET)
 if(NOT TARGET SDL3::SDL3)
     set(SDL_SHARED OFF CACHE BOOL "" FORCE)
