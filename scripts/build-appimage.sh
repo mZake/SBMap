@@ -2,7 +2,7 @@
 
 set -e
 
-ROOT="$(cd "$(dirname "$0")" && pwd)/.."
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build"
 APPDIR="$BUILD/AppDir"
 LINUXDEPLOY="$BUILD/linuxdeploy-x86_64.AppImage"
