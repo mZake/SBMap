@@ -78,8 +78,8 @@ namespace SBMap
     
     void TilePalette::SetTileSize()
     {
-        int32 maximum_tile_width = SDL_min(m_Tileset.atlas.width, TILE_MAXIMUM_WIDTH);
-        int32 maximum_tile_height = SDL_min(m_Tileset.atlas.height, TILE_MAXIMUM_HEIGHT);
+        int32 maximum_tile_width = SDL_clamp(m_Tileset.atlas.width, TILE_MINIMUM_WIDTH, TILE_MAXIMUM_WIDTH);
+        int32 maximum_tile_height = SDL_clamp(m_Tileset.atlas.height, TILE_MINIMUM_HEIGHT, TILE_MAXIMUM_HEIGHT);
         
         m_InputTileWidth = SDL_clamp(m_InputTileWidth, TILE_MINIMUM_WIDTH, maximum_tile_width);
         m_InputTileHeight = SDL_clamp(m_InputTileHeight, TILE_MINIMUM_HEIGHT, maximum_tile_height);
