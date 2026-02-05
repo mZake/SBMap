@@ -100,7 +100,8 @@ namespace SBMap
             Tilemap::Cell& tilemap_cell = tilemap_cells[i];
             
             SBMCell& sbm_cell = sbm_cell_array[i];
-            if(!IsInTilesetBounds(tileset, sbm_cell.tile_x, sbm_cell.tile_y))
+            if ((sbm_cell.tile_x != -1 || sbm_cell.tile_y != -1) &&
+                !IsInTilesetBounds(tileset, sbm_cell.tile_x, sbm_cell.tile_y))
                 return Error{ "Tile out of tileset bounds." };
             
             tilemap_cell.tile_x = sbm_cell.tile_x;
